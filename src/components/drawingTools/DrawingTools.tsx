@@ -1,14 +1,21 @@
 import Button from "../button/Button";
+import { useDrawing } from "../../DrawingContext";
+
 import './DrawingTools.css'
 const DrawingTools = ()=>{
+    const {selectedTool, setSelectedTool} = useDrawing();
+
+    const handleToolClick = (tool: string)=>{
+        setSelectedTool(tool);
+    }
+
     return(
         <div className="drawing_tools">
-            <Button title="지우개" onClick={()=>{}} />
-            <Button title="선" onClick={()=>{}} />
-            <Button title="사각형" onClick={()=>{}} />
-            <Button title="원" onClick={()=>{}} />
-            <Button title="다각형" onClick={()=>{}} />
-            <Button title="자유그리기" onClick={()=>{}} />
+            <Button title="Eraser" onClick={()=>handleToolClick("eraser")} isSelected={selectedTool==="eraser"}/>
+            <Button title="Line" onClick={()=>handleToolClick("line")} isSelected={selectedTool==="line"}/>
+            <Button title="Rect" onClick={()=>handleToolClick("rectangle")} isSelected={selectedTool==="rectangle"}/>
+            <Button title="Ellipse" onClick={()=>handleToolClick("ellipse")} isSelected={selectedTool==="ellipse"}/>
+            <Button title="Poly" onClick={()=>handleToolClick("polygon")} isSelected={selectedTool==="polygon"}/>
         </div>
     )
 }

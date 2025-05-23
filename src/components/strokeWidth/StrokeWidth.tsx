@@ -1,8 +1,7 @@
-import { useState } from "react";
+import { useDrawing } from "../../DrawingContext";
 import './StrokeWidth.css'
 const StrokeWidth = ()=>{
-
-    const [strokeWidth, setStrokeWidth] = useState(5);
+    const {strokeWidth, setStrokeWidth} = useDrawing();
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>)=>{
         setStrokeWidth(Number(e.target.value));
