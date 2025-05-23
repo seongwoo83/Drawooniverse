@@ -9,8 +9,9 @@ const StrokeWidth = ()=>{
 
     return (
         <div className="stroke_width_wrapper">
+            <span className="stroke_width_label">Stroke Width:</span>
             <input type="range" min={5} max={50} value={strokeWidth} onChange={handleChange} />
-            <span>width:{strokeWidth}</span>
+            <span className="stroke_width_value">{strokeWidth}px</span>
         </div>
     )
 }
