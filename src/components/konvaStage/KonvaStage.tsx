@@ -19,12 +19,12 @@ const KonvaStage = () => {
         strokeColor,
         currentLine,
         setCurrentLine,
-        layers,
-        setLayers,
+        histories,
         isDrawing,
         setIsDrawing,
         zIndex,
-        setZIndex
+        setZIndex,
+        addHistory
     } = useDrawing();
 
     useEffect(() => {
@@ -144,10 +144,10 @@ const KonvaStage = () => {
             const { start, end } = currentLine;
             const dist = Math.sqrt(Math.pow(end!.x - start!.x, 2) + Math.pow(end!.y - start!.y, 2));
             if (dist >= 5) {
-                setLayers([...layers, {
+                addHistory({
                     ...currentLine,
                     points: [start!.x, start!.y, end!.x, end!.y]
-                }]);
+                });
                 setZIndex(zIndex + 1);
             }
         }else if(currentLine.shapeType === "freehand"){
@@ -174,7 +174,7 @@ const KonvaStage = () => {
             }
         }
         if (shouldAdd) {
-            setLayers([...layers, { ...currentLine, zIndex }]);
+            addHistory({ ...currentLine, zIndex });
             setZIndex(zIndex + 1);
         }
         setCurrentLine(null);
@@ -196,13 +196,13 @@ const KonvaStage = () => {
             const dy = pos.y - points[1];
             const dist = Math.sqrt(dx * dx + dy * dy);
             if(dist < 10 && points.length >= 6){
-                setLayers([...layers, {
+                addHistory({
                     points: [...points, points[0], points[1]],
                     stroke: strokeColor,
                     strokeWidth: strokeWidth,
                     zIndex: zIndex,
                     shapeType: "polygon"
-                }]);
+                });
                 setZIndex(zIndex + 1);
                 setCurrentPolygon(null);
                 setIsSnaping(false);
@@ -255,53 +255,53 @@ const KonvaStage = () => {
                 onClick={handleStageClick}
             >
                 <Layer>
-                    {layers.map((layer, index) => {
-                        if (layer.shapeType === "line" || layer.shapeType === "freehand") {
+                    {histories.map((history, index) => {
+                        if (history.shapeType === "line" || history.shapeType === "freehand") {
                             return (
                                 <Line
                                     key={index}
-                                    points={layer.points}
-                                    stroke={layer.stroke}
-                                    strokeWidth={layer.strokeWidth}
-                                    zIndex={layer.zIndex}
+                                    points={history.points}
+                                    stroke={history.stroke}
+                                    strokeWidth={history.strokeWidth}
+                                    zIndex={history.zIndex}
                                     lineCap="round"
                                     lineJoin="round"
                                 />
                             )
-                        } else if (layer.shapeType === "rectangle") {
+                        } else if (history.shapeType === "rectangle") {
                             return (
                                 <Rect
                                     key={index}
-                                    x={layer.x}
-                                    y={layer.y}
-                                    width={layer.width}
-                                    height={layer.height}
-                                    stroke={layer.stroke}
-                                    strokeWidth={layer.strokeWidth}
-                                    zIndex={layer.zIndex}
+                                    x={history.x}
+                                    y={history.y}
+                                    width={history.width}
+                                    height={history.height}
+                                    stroke={history.stroke}
+                                    strokeWidth={history.strokeWidth}
+                                    zIndex={history.zIndex}
                                 />
                             )
-                        } else if (layer.shapeType === "ellipse") {
+                        } else if (history.shapeType === "ellipse") {
                             return (
                                 <Ellipse
                                     key={index}
-                                    x={layer.x}
-                                    y={layer.y}
-                                    radiusX={layer.radiusX!}
-                                    radiusY={layer.radiusY!}
-                                    stroke={layer.stroke}
-                                    strokeWidth={layer.strokeWidth}
-                                    zIndex={layer.zIndex}
+                                    x={history.x}
+                                    y={history.y}
+                                    radiusX={history.radiusX!}
+                                    radiusY={history.radiusY!}
+                                    stroke={history.stroke}
+                                    strokeWidth={history.strokeWidth}
+                                    zIndex={history.zIndex}
                                 />
                             )
-                        }else if(layer.shapeType === "polygon"){
+                        }else if(history.shapeType === "polygon"){
                             return (
                                 <Line 
                                     key={index}
-                                    points={layer.points}
-                                    stroke={layer.stroke}
-                                    strokeWidth={layer.strokeWidth}
-                                    zIndex={layer.zIndex}
+                                    points={history.points}
+                                    stroke={history.stroke}
+                                    strokeWidth={history.strokeWidth}
+                                    zIndex={history.zIndex}
                                     closed={true}
                                     lineCap="round"
                                     lineJoin="round"

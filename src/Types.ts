@@ -16,23 +16,29 @@ interface DrawingContextType {
     strokeColor: string;
     setStrokeColor: (color: string) => void;
     // 현재 선
-    currentLine: Layer | null;
-    setCurrentLine: (line: Layer | null) => void;
+    currentLine: History | null;
+    setCurrentLine: (line: History | null) => void;
     // 레이어
-    layers: Layer[];
-    setLayers: (layers: Layer[]) => void;
+    histories: History[];
+    setHistories: (histories: History[]) => void;
     // 현재 레이어
-    currentLayer: Layer | null;
-    setCurrentLayer: (layer: Layer | null) => void;
+    currentHistory: History | null;
+    setCurrentHistory: (history: History | null) => void;
     // zIndex
     zIndex: number;
     setZIndex: (zIndex: number) => void;
     // 그리기 상태
     isDrawing: boolean;
     setIsDrawing: (isDrawing: boolean) => void;
+    // 추가 레이어
+    addHistory: (history: History) => void;
+    // 되돌리기
+    undo: () => void;
+    // 다시 실행
+    redo: () => void;
 }
 
-interface Layer{
+interface History{
     points?: number[];
     start?: {x: number, y: number};
     end?: {x: number, y: number};
@@ -49,4 +55,4 @@ interface Layer{
     radius?: number;
 }
 
-export type { ButtonProps, DrawingContextType, Layer };
+export type { ButtonProps, DrawingContextType, History };

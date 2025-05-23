@@ -1,4 +1,4 @@
-.layer_list{
+.history_list{
     flex: 1;
     height: 100%;
     width: 100%;
@@ -6,17 +6,17 @@
     overflow-y: auto;
 }
 
-.layer_items{
+.history_items{
     display: flex;
     flex-direction: column;
     gap: 5px;
 }
 
-.layer_item{
+.history_item{
     padding: 8px;
     background-color: #f5f5f5;
     cursor: pointer;
 }
-.layer_item:hover{
+.history_item:hover{
     background-color: #e0e0e0;
 }

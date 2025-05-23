@@ -1,6 +1,6 @@
 import './App.css'
 import Toolbar from './layout/toolbar/Toolbar'
-import LayerPanel from './layout/layerPanel/LayerPanel'
+import HistoryPanel from './layout/historyPanel/HistoryPanel'
 import Canvas from './layout/canvas/Canvas'
 import { DrawingProvider } from './DrawingContext'
 
@@ -15,8 +15,8 @@ function App() {
 
 
         <section className='content_section'>
-          <aside className="layer_wrapper">
-            <LayerPanel />
+          <aside className="history_wrapper">
+            <HistoryPanel />
           </aside>
 
 
