@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { Stage, Layer, Line, Rect, Ellipse } from "react-konva";
+import { useEffect, useRef, useState, type JSX } from "react";
+import { Stage, Layer, Line, Rect, Ellipse, Circle } from "react-konva";
 import { useDrawing } from "../../DrawingContext";
 import "./KonvaStage.css"
 
@@ -346,15 +346,36 @@ const KonvaStage = () => {
                     )}
                     {
                         selectedTool === "polygon" && currentPolygon && (
-                            <Line 
-                                points={hoverPos ? [...currentPolygon.points, hoverPos.x, hoverPos.y] : currentPolygon.points}
-                                stroke={strokeColor}
-                                strokeWidth={strokeWidth}
-                                closed={isSnaping}
-                                zIndex={zIndex}
-                                lineCap="round"
-                                lineJoin="round"
-                            />
+                            <>
+                                <Line 
+                                    points={hoverPos ? [...currentPolygon.points, hoverPos.x, hoverPos.y] : currentPolygon.points}
+                                    stroke={strokeColor}
+                                    strokeWidth={1}
+                                    closed={isSnaping}
+                                    zIndex={zIndex}
+                                    lineCap="round"
+                                    lineJoin="round"
+                                />
+                                {
+                                    currentPolygon.points.length >= 2 &&
+                                    currentPolygon.points.reduce((acc: JSX.Element[], val, idx, arr)=>{
+                                    if(idx % 2 === 0 && arr[idx + 1] !== undefined){
+                                        acc.push(
+                                            <Circle
+                                                key={idx}
+                                                x={val}
+                                                y={arr[idx + 1]}
+                                                radius={6}
+                                                fill={strokeColor}
+                                                strokeWidth={2}
+                                            />
+                                        );
+                                    }
+                                    return acc;
+
+                                    }, [])
+                                }
+                            </>
                         )
                     }
                 </Layer>
