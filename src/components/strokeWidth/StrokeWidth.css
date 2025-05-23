@@ -1,0 +1,17 @@
+.stroke_width_wrapper{
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.stroke_width_wrapper input{
+    width: 100px;
+}
+
+.stroke_width_wrapper span{
+    display: inline-block;
+    width: 60px;
+    text-align: right;
+    font-size: 14px;
+    font-weight: bold;
+}

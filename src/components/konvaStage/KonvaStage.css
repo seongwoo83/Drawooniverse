@@ -1,0 +1,13 @@
+.konva_stage{
+    position: relative;
+    box-sizing: border-box;
+    border-radius: 8px;
+    min-width: 0;
+    display: flex;
+    background-color: #fff;
+}
+
+.konva_stage > div{
+    flex: 1;
+    min-width: 0;
+}

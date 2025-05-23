@@ -1,0 +1,11 @@
+input[type="color"]{
+    width: 30px;
+    height: 30px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+input[type="color"]:hover{
+    border-color: #aaa;
+}
