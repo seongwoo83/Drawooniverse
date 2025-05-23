@@ -9,6 +9,9 @@ const KonvaStage = () => {
         width: 0,
         height: 0
     });
+    const [currentPolygon, setCurrentPolygon] = useState<{ points: number[], isDrawing: boolean } | null>(null);
+    const [hoverPos, setHoverPos] = useState<{x: number, y: number} | null>(null);
+    const [isSnaping, setIsSnaping] = useState(false);
 
     const {
         selectedTool,
@@ -88,8 +91,6 @@ const KonvaStage = () => {
                 zIndex: zIndex,
                 shapeType: "ellipse"
             })
-        } else if (selectedTool === "polygon") {
-
         }
     };
 
@@ -130,8 +131,6 @@ const KonvaStage = () => {
                 radiusY: radius.radiusY
             }
             setCurrentLine(newEllipse);
-        } else if (currentLine.shapeType === "polygon") {
-
         }
     };
 
@@ -173,10 +172,7 @@ const KonvaStage = () => {
             if (radiusX >= 5 && radiusY >= 5) {
                 shouldAdd = true;
             }
-        } else if (currentLine.shapeType === "polygon") {
-            shouldAdd = true;
         }
-
         if (shouldAdd) {
             setLayers([...layers, { ...currentLine, zIndex }]);
             setZIndex(zIndex + 1);
@@ -184,14 +180,79 @@ const KonvaStage = () => {
         setCurrentLine(null);
     };
 
+
+    const handleStageClick = (e: any) => {
+        if(selectedTool !== "polygon") return;
+        const stage = e.target.getStage();
+        const pos = stage.getPointerPosition();
+        if(!currentPolygon){
+            setCurrentPolygon({
+                points: [pos.x, pos.y],
+                isDrawing: true
+            })
+        }else{
+            const points = currentPolygon.points;
+            const dx = pos.x - points[0];
+            const dy = pos.y - points[1];
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if(dist < 10 && points.length >= 6){
+                setLayers([...layers, {
+                    points: [...points, points[0], points[1]],
+                    stroke: strokeColor,
+                    strokeWidth: strokeWidth,
+                    zIndex: zIndex,
+                    shapeType: "polygon"
+                }]);
+                setZIndex(zIndex + 1);
+                setCurrentPolygon(null);
+                setIsSnaping(false);
+                setHoverPos(null);
+            }else{
+                const newPolygon = {
+                    ...currentPolygon,
+                    points: [...points, pos.x, pos.y]
+                }
+                setCurrentPolygon(newPolygon);
+            }
+        }
+    }
+
+    const handleStageMouseMove = (e: any) => {
+        if(selectedTool === "polygon" && currentPolygon && currentPolygon.isDrawing){
+            const stage = e.target.getStage();
+            const pos = stage.getPointerPosition();
+            const points = currentPolygon.points;
+            if(points.length >= 2){
+                const dx = pos.x - points[0];
+                const dy = pos.y - points[1];
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if(dist < 10){
+                    setIsSnaping(true);
+                    setHoverPos({x: points[0], y: points[1]});
+                }else{
+                    setIsSnaping(false);
+                    setHoverPos(pos);
+                }
+            }else{
+                setIsSnaping(false);
+                setHoverPos(pos);
+            }
+        }
+    }
+
+
     return (
         <div className="konva_stage" ref={containerRef}>
             <Stage
                 width={dimensions.width}
                 height={dimensions.height}
                 onMouseDown={handleMouseDown}
-                onMouseMove={handleMouseMove}
+                onMouseMove={(e)=>{
+                    handleMouseMove(e);
+                    handleStageMouseMove(e);
+                }}
                 onMouseUp={handleMouseUp}
+                onClick={handleStageClick}
             >
                 <Layer>
                     {layers.map((layer, index) => {
@@ -233,8 +294,19 @@ const KonvaStage = () => {
                                     zIndex={layer.zIndex}
                                 />
                             )
-                        } else if (layer.shapeType === "polygon") {
-
+                        }else if(layer.shapeType === "polygon"){
+                            return (
+                                <Line 
+                                    key={index}
+                                    points={layer.points}
+                                    stroke={layer.stroke}
+                                    strokeWidth={layer.strokeWidth}
+                                    zIndex={layer.zIndex}
+                                    closed={true}
+                                    lineCap="round"
+                                    lineJoin="round"
+                                />
+                            )
                         }
                     })}
                     {currentLine && (currentLine.shapeType === "line" || currentLine.shapeType === "freehand") && (
@@ -272,6 +344,19 @@ const KonvaStage = () => {
                             zIndex={zIndex}
                         />
                     )}
+                    {
+                        selectedTool === "polygon" && currentPolygon && (
+                            <Line 
+                                points={hoverPos ? [...currentPolygon.points, hoverPos.x, hoverPos.y] : currentPolygon.points}
+                                stroke={strokeColor}
+                                strokeWidth={strokeWidth}
+                                closed={isSnaping}
+                                zIndex={zIndex}
+                                lineCap="round"
+                                lineJoin="round"
+                            />
+                        )
+                    }
                 </Layer>
             </Stage>
         </div>
