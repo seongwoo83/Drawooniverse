@@ -1,3 +1,9 @@
+.color_picker{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
 input[type="color"]{
     width: 30px;
     height: 30px;

@@ -1,4 +1,5 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useEffect, useRef } from "react";
+import { set, get } from "idb-keyval";
 import type { ReactNode } from "react";
 import type { DrawingContextType, Layer } from "./Types";
 
@@ -13,6 +14,7 @@ export const DrawingProvider = ({ children }: { children: ReactNode }) => {
     const [layers, setLayers] = useState<Layer[]>([]);
     const [currentLayer, setCurrentLayer] = useState<Layer | null>(null);
     const [zIndex, setZIndex] = useState<number>(0);
+    const isLoaded = useRef<boolean>(false);
 
     const value = {
         selectedTool,
@@ -32,6 +34,21 @@ export const DrawingProvider = ({ children }: { children: ReactNode }) => {
         zIndex,
         setZIndex,
     }
+
+
+    useEffect(() => {
+        get('layers').then((savedLayers) => {
+            console.log('indexedDB에서 불러온 값:', savedLayers);
+            if (Array.isArray(savedLayers)) setLayers(savedLayers);
+            isLoaded.current = true;
+        });
+    }, []);
+
+    useEffect(()=>{
+        if(isLoaded.current){
+            set('layers', layers);
+        }
+    }, [layers]);
 
     return <DrawingContext.Provider value={value}>{children}</DrawingContext.Provider>
 }

@@ -34,10 +34,12 @@ interface DrawingContextType {
 
 interface Layer{
     points?: number[];
+    start?: {x: number, y: number};
+    end?: {x: number, y: number};
     stroke: string;
     strokeWidth: number;
     zIndex: number;
-    shapeType: 'line' | 'rectangle' | 'ellipse' | 'polygon';
+    shapeType: 'line' | 'rectangle' | 'ellipse' | 'polygon' | 'freehand';
     x?: number;
     y?: number;
     radiusX?: number;

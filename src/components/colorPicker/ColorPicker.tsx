@@ -10,7 +10,7 @@ const ColorPicker = ()=>{
 
     return (
         <div className="color_picker">
-            <input type="color" value={strokeColor} onChange={handleColorChange} />
+            <span>Selected Color:</span> <input type="color" value={strokeColor} onChange={handleColorChange} />
         </div>
     )
 }

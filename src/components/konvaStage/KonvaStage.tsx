@@ -29,7 +29,7 @@ const KonvaStage = () => {
             if (containerRef.current) {
                 setDimensions({
                     width: containerRef.current.offsetWidth,
-                    height: containerRef.current.offsetHeight === 0 ? containerRef.current.parentElement!.offsetHeight - 30 : containerRef.current.offsetHeight - 30
+                    height: containerRef.current.offsetHeight === 0 ? containerRef.current.parentElement!.offsetHeight - 30 : containerRef.current.offsetHeight
                 })
             }
         };
@@ -50,11 +50,21 @@ const KonvaStage = () => {
 
         if (selectedTool === "line") {
             setCurrentLine({
+                points: [],
+                start: { x: pos.x, y: pos.y },
+                end: { x: pos.x, y: pos.y },
+                stroke: strokeColor,
+                strokeWidth,
+                zIndex,
+                shapeType: "line"
+            });
+        } else if (selectedTool === "freehand") {
+            setCurrentLine({
                 points: [pos.x, pos.y],
                 stroke: strokeColor,
                 strokeWidth: strokeWidth,
                 zIndex: zIndex,
-                shapeType: "line"
+                shapeType: "freehand"
             });
         } else if (selectedTool === "rectangle") {
             setCurrentLine({
@@ -89,6 +99,12 @@ const KonvaStage = () => {
         const pos = stage.getPointerPosition();
 
         if (currentLine.shapeType === "line") {
+            const newLine = {
+                ...currentLine,
+                end: { x: pos.x, y: pos.y }
+            };
+            setCurrentLine(newLine);
+        } else if (currentLine.shapeType === "freehand") {
             const newLine = {
                 ...currentLine,
                 points: [...(currentLine.points || []), pos.x, pos.y],
@@ -126,16 +142,26 @@ const KonvaStage = () => {
         let shouldAdd = false;
 
         if (currentLine.shapeType === "line") {
+            const { start, end } = currentLine;
+            const dist = Math.sqrt(Math.pow(end!.x - start!.x, 2) + Math.pow(end!.y - start!.y, 2));
+            if (dist >= 5) {
+                setLayers([...layers, {
+                    ...currentLine,
+                    points: [start!.x, start!.y, end!.x, end!.y]
+                }]);
+                setZIndex(zIndex + 1);
+            }
+        }else if(currentLine.shapeType === "freehand"){
             const pts = currentLine.points;
-            if (pts && pts.length >= 4) {
+            if(pts && pts.length >= 4){
                 const dx = pts[pts.length - 2] - pts[0];
                 const dy = pts[pts.length - 1] - pts[1];
                 const dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist >= 5) {
+                if(dist >= 5){
                     shouldAdd = true;
                 }
             }
-        } else if (currentLine.shapeType === "rectangle") {
+        }else if (currentLine.shapeType === "rectangle") {
             const width = currentLine.width!;
             const height = currentLine.height!;
             if (width >= 5 && height >= 5) {
@@ -169,7 +195,7 @@ const KonvaStage = () => {
             >
                 <Layer>
                     {layers.map((layer, index) => {
-                        if (layer.shapeType === "line") {
+                        if (layer.shapeType === "line" || layer.shapeType === "freehand") {
                             return (
                                 <Line
                                     key={index}
@@ -211,9 +237,11 @@ const KonvaStage = () => {
 
                         }
                     })}
-                    {currentLine && currentLine.shapeType === "line" && (
+                    {currentLine && (currentLine.shapeType === "line" || currentLine.shapeType === "freehand") && (
                         <Line
-                            points={currentLine.points}
+                            points={
+                                currentLine.shapeType === "line" ? [currentLine.start!.x, currentLine.start!.y, currentLine.end!.x, currentLine.end!.y] : currentLine.points
+                            }
                             stroke={currentLine.stroke}
                             strokeWidth={currentLine.strokeWidth}
                             tension={0.5}
