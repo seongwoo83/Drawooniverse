@@ -19,12 +19,12 @@ const KonvaStage = () => {
         strokeColor,
         currentLine,
         setCurrentLine,
-        histories,
         isDrawing,
         setIsDrawing,
         zIndex,
         setZIndex,
-        addHistory
+        addHistory,
+        layers
     } = useDrawing();
 
     useEffect(() => {
@@ -255,7 +255,7 @@ const KonvaStage = () => {
                 onClick={handleStageClick}
             >
                 <Layer>
-                    {histories.map((history, index) => {
+                    {layers.map((history, index) => {
                         if (history.shapeType === "line" || history.shapeType === "freehand") {
                             return (
                                 <Line

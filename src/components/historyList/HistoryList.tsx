@@ -1,22 +1,25 @@
 import { useDrawing } from "../../DrawingContext";
-import type { History } from "../../Types";
 import './HistoryList.css'
 
-const HistoryList = ()=>{
-    const {histories, setCurrentHistory} = useDrawing();
+const HistoryList = () => {
+    const { histories, setCurrentHistory, historyIndex, historyOffset } = useDrawing();
 
-    const handleHistoryClick = (history: History)=>{
-        setCurrentHistory(history);
+    const handleHistoryClick = (index: number) => {
+        setCurrentHistory(index);
     }
 
-    return(
+    return (
         <div className="history_list">
             <div className="history_items">
-                {(Array.isArray(histories) ? histories : []).map((history, index) => (
-                    <div key={index} className="history_item" onClick={()=>handleHistoryClick(history)}>
-                        <span>History {histories.length - index}</span>
-                    </div>
-                ))}
+                {histories.slice().reverse().map((_history, index) => {
+                    const realIndex = histories.length - 1 - index;
+                    const displayNumber = historyOffset + realIndex + 1;
+                    return (
+                        <div key={realIndex} className={`history_item ${realIndex === historyIndex ? 'selected' : ''} ${realIndex > historyIndex ? 'prev_index' : ''}`} onClick={() => handleHistoryClick(realIndex)}>
+                            <span>History {displayNumber}</span>
+                        </div>
+                    )
+                })}
             </div>
         </div>
     )

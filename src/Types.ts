@@ -3,7 +3,7 @@ type ButtonProps = {
     onClick: () => void;
     className?: string;
     isSelected: boolean;
-}
+};
 
 interface DrawingContextType {
     // 선택된 도구
@@ -19,18 +19,24 @@ interface DrawingContextType {
     currentLine: History | null;
     setCurrentLine: (line: History | null) => void;
     // 레이어
-    histories: History[];
-    setHistories: (histories: History[]) => void;
-    // 현재 레이어
-    currentHistory: History | null;
-    setCurrentHistory: (history: History | null) => void;
+    layers: History[];
+    // 작업 내역
+    histories: History[][];
+    // 작업 내역 순서
+    historyIndex: number;
+    setHistoryIndex: (index: number) => void;
+    setHistories: (histories: History[][]) => void;
+    // 작업 내역 오프셋
+    historyOffset: number;
+    // 현재 작업 내역
+    setCurrentHistory: (index: number) => void;
     // zIndex
     zIndex: number;
     setZIndex: (zIndex: number) => void;
     // 그리기 상태
     isDrawing: boolean;
     setIsDrawing: (isDrawing: boolean) => void;
-    // 추가 레이어
+    // 작업 내역 추가
     addHistory: (history: History) => void;
     // 되돌리기
     undo: () => void;
@@ -38,14 +44,14 @@ interface DrawingContextType {
     redo: () => void;
 }
 
-interface History{
+interface History {
     points?: number[];
-    start?: {x: number, y: number};
-    end?: {x: number, y: number};
+    start?: {x: number; y: number};
+    end?: {x: number; y: number};
     stroke: string;
     strokeWidth: number;
     zIndex: number;
-    shapeType: 'line' | 'rectangle' | 'ellipse' | 'polygon' | 'freehand';
+    shapeType: "line" | "rectangle" | "ellipse" | "polygon" | "freehand";
     x?: number;
     y?: number;
     radiusX?: number;
@@ -55,4 +61,4 @@ interface History{
     radius?: number;
 }
 
-export type { ButtonProps, DrawingContextType, History };
+export type {ButtonProps, DrawingContextType, History};

@@ -11,32 +11,39 @@ export const DrawingProvider = ({ children }: { children: ReactNode }) => {
     const [strokeColor, setStrokeColor] = useState<string>("#000000");
     const [currentLine, setCurrentLine] = useState<History | null>(null);
     const [isDrawing, setIsDrawing] = useState<boolean>(false);
-    const [histories, setHistories] = useState<History[]>([]);
-    const [currentHistory, setCurrentHistory] = useState<History | null>(null);
+    const [histories, setHistories] = useState<History[][]>([[]]);
+    const [historyOffset, setHistoryOffset] = useState<number>(0);
+    const [historyIndex, setHistoryIndex] = useState(0);
     const [zIndex, setZIndex] = useState<number>(0);
     const isLoaded = useRef<boolean>(false);
-    const [undoStack, setUndoStack] = useState<History[][]>([]);
-    const [redoStack, setRedoStack] = useState<History[][]>([]);
 
-    const undo = ()=>{
-        if(histories.length === 0) return;
-        setRedoStack(prev => [...prev, histories]);
-        const prevHistories = undoStack[undoStack.length - 1];
-        setUndoStack(undoStack.slice(0, -1));
-        setHistories(Array.isArray(prevHistories) ? prevHistories : []);
+    const layers = histories[historyIndex] || [];
+    const MAX_HISTORY = 40;
+
+    const undo = () => {
+        if (historyIndex > 0) setHistoryIndex(historyIndex - 1);
+    };
+    const redo = () => {
+        if (historyIndex < histories.length - 1) setHistoryIndex(historyIndex + 1);
+    };
+    const addHistory = (newHistory: History) => {
+        const newHistories = histories.slice(0, historyIndex + 1);
+        const nextLayers = [...histories[historyIndex], newHistory];
+        let updatedHistroies = [...newHistories, nextLayers];
+        let offset = historyOffset;
+
+        if (updatedHistroies.length > MAX_HISTORY) {
+            const diff = updatedHistroies.length - MAX_HISTORY;
+            updatedHistroies = updatedHistroies.slice(diff);
+            offset += diff;
+        }
+        setHistories(updatedHistroies);
+        setHistoryIndex(updatedHistroies.length - 1);
+        setHistoryOffset(offset);
     }
-    const redo = ()=>{
-        if (redoStack.length === 0) return;
-        setUndoStack(prev => [...prev, histories]);
-        const nextHistories = redoStack[redoStack.length - 1];
-        setRedoStack(redoStack.slice(0, -1));
-        setHistories(Array.isArray(nextHistories) ? nextHistories : []);
-    }   
-    const addHistory = (newHistory: History)=>{
-        setUndoStack(prev => [...prev, histories]);
-        setRedoStack([]);
-        setHistories(prev => [...prev, newHistory]);
-    }
+    const setCurrentHistory = (index: number) => {
+        setHistoryIndex(index);
+    };
 
     const value = {
         selectedTool,
@@ -49,9 +56,12 @@ export const DrawingProvider = ({ children }: { children: ReactNode }) => {
         setCurrentLine,
         isDrawing,
         setIsDrawing,
+        layers,
         histories,
         setHistories,
-        currentHistory,
+        historyIndex,
+        setHistoryIndex,
+        historyOffset,
         setCurrentHistory,
         zIndex,
         setZIndex,
@@ -62,25 +72,35 @@ export const DrawingProvider = ({ children }: { children: ReactNode }) => {
 
 
     useEffect(() => {
-        get('histories').then((savedHistories) => {
-            if (Array.isArray(savedHistories)){
-                setHistories(savedHistories);
-
-                const stack:History[][] = [];
-                for(let i = 0; i < savedHistories.length; i++){
-                    stack.push(savedHistories.slice(0, i));
+        Promise.all([get('histories'), get('historyIndex'), get('historyOffset')]).then(([savedHistories, savedIndex, savedOffset]) => {
+            if (Array.isArray(savedHistories)) {
+                if (Array.isArray(savedHistories[0])) {
+                    setHistories(savedHistories as History[][]);
+                } else {
+                    setHistories([savedHistories as History[]]);
                 }
-                setUndoStack(stack);
+            }
+            if(typeof savedIndex === 'number'){
+                setHistoryIndex(savedIndex);
+            }else{
+                setHistoryIndex(
+                    Array.isArray(savedHistories) && savedHistories.length > 0 ? savedHistories.length - 1 : 0
+                );
+            }
+            if(typeof savedOffset === 'number'){
+                setHistoryOffset(savedOffset);
             }
             isLoaded.current = true;
         });
     }, []);
 
-    useEffect(()=>{
-        if(isLoaded.current){
+    useEffect(() => {
+        if (isLoaded.current) {
             set('histories', histories);
+            set('historyIndex', historyIndex);
+            set('historyOffset', historyOffset);
         }
-    }, [histories]);
+    }, [histories, historyIndex, historyOffset]);
 
     return <DrawingContext.Provider value={value}>{children}</DrawingContext.Provider>
 }
