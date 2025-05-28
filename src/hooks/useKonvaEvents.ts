@@ -31,7 +31,7 @@ export const useKonvaEvents = () => {
 
         if (selectedTool === "line") {
             setCurrentLine({
-                points: [],
+                points: [pos.x, pos.y, pos.x, pos.y],
                 start: { x: pos.x, y: pos.y },
                 end: { x: pos.x, y: pos.y },
                 stroke: strokeColor,

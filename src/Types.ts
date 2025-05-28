@@ -5,6 +5,47 @@ type ButtonProps = {
     isSelected: boolean;
 };
 
+interface BaseShape {
+    stroke: string;
+    strokeWidth: number;
+    zIndex: number;
+}
+
+interface LineShape extends BaseShape {
+    shapeType: "line";
+    start: {x: number; y: number};
+    end: {x: number; y: number};
+    points: [number, number, number, number];
+}
+
+interface FreehandShape extends BaseShape {
+    shapeType: "freehand";
+    points: number[];
+}
+
+interface RectangleShape extends BaseShape {
+    shapeType: "rectangle";
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+}
+
+interface EllipseShape extends BaseShape {
+    shapeType: "ellipse";
+    x: number;
+    y: number;
+    radiusX: number;
+    radiusY: number;
+}
+
+interface PolygonShape extends BaseShape {
+    shapeType: "polygon";
+    points: number[];
+}
+
+type Shape = LineShape | FreehandShape | RectangleShape | EllipseShape | PolygonShape;
+
 interface DrawingContextType {
     // 선택된 도구
     selectedTool: string;
@@ -16,16 +57,16 @@ interface DrawingContextType {
     strokeColor: string;
     setStrokeColor: (color: string) => void;
     // 현재 선
-    currentLine: History | null;
-    setCurrentLine: (line: History | null) => void;
+    currentLine: Shape | null;
+    setCurrentLine: (line: Shape | null) => void;
     // 레이어
-    layers: History[];
+    layers: Shape[];
     // 작업 내역
-    histories: History[][];
+    histories: Shape[][];
     // 작업 내역 순서
     historyIndex: number;
     setHistoryIndex: (index: number) => void;
-    setHistories: (histories: History[][]) => void;
+    setHistories: (histories: Shape[][]) => void;
     // 작업 내역 오프셋
     historyOffset: number;
     // 현재 작업 내역
@@ -37,28 +78,11 @@ interface DrawingContextType {
     isDrawing: boolean;
     setIsDrawing: (isDrawing: boolean) => void;
     // 작업 내역 추가
-    addHistory: (history: History) => void;
+    addHistory: (history: Shape) => void;
     // 되돌리기
     undo: () => void;
     // 다시 실행
     redo: () => void;
 }
 
-interface History {
-    points?: number[];
-    start?: {x: number; y: number};
-    end?: {x: number; y: number};
-    stroke: string;
-    strokeWidth: number;
-    zIndex: number;
-    shapeType: "line" | "rectangle" | "ellipse" | "polygon" | "freehand";
-    x?: number;
-    y?: number;
-    radiusX?: number;
-    radiusY?: number;
-    width?: number;
-    height?: number;
-    radius?: number;
-}
-
-export type {ButtonProps, DrawingContextType, History};
+export type {ButtonProps, DrawingContextType, Shape, LineShape, FreehandShape, RectangleShape, EllipseShape, PolygonShape};
