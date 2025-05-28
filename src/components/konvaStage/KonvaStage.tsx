@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type JSX } from "react";
 import { Stage, Layer, Line, Rect, Ellipse, Circle } from "react-konva";
-import { useDrawing } from "../../DrawingContext";
+import { useDrawing } from "../../hooks/useDrawing";
 import "./KonvaStage.css"
 
 const KonvaStage = () => {

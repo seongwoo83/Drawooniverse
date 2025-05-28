@@ -2,7 +2,7 @@ import DrawingTools from "../../components/drawingTools/DrawingTools";
 import ColorPicker from "../../components/colorPicker/ColorPicker";
 import StrokeWidth from '../../components/strokeWidth/StrokeWidth';
 import Button from '../../components/button/Button';
-import { useDrawing } from '../../DrawingContext';
+import { useDrawing } from '../../hooks/useDrawing';
 import './Toolbar.css'
 
 

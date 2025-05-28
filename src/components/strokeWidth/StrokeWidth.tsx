@@ -1,4 +1,4 @@
-import { useDrawing } from "../../DrawingContext";
+import { useDrawing } from "../../hooks/useDrawing";
 import './StrokeWidth.css'
 const StrokeWidth = ()=>{
     const {strokeWidth, setStrokeWidth} = useDrawing();

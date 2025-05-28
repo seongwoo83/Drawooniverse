@@ -1,9 +1,8 @@
-import { createContext, useContext, useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { set, get } from "idb-keyval";
 import type { ReactNode } from "react";
-import type { DrawingContextType, History } from "./Types";
-
-const DrawingContext = createContext<DrawingContextType | undefined>(undefined);
+import type { History } from "../Types";
+import { DrawingContext } from "../context/DrawingContext";
 
 export const DrawingProvider = ({ children }: { children: ReactNode }) => {
     const [selectedTool, setSelectedTool] = useState<string>("line");
@@ -103,12 +102,5 @@ export const DrawingProvider = ({ children }: { children: ReactNode }) => {
     }, [histories, historyIndex, historyOffset]);
 
     return <DrawingContext.Provider value={value}>{children}</DrawingContext.Provider>
-}
 
-export const useDrawing = () => {
-    const context = useContext(DrawingContext);
-    if (!context) {
-        throw new Error("useDrawing must be used within a DrawingProvider");
-    }
-    return context;
-}
+} 
