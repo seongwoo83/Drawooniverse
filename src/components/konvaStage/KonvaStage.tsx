@@ -161,8 +161,8 @@ const KonvaStage = () => {
                 }
             }
         }else if (currentLine.shapeType === "rectangle") {
-            const width = currentLine.width!;
-            const height = currentLine.height!;
+            const width = Math.abs(currentLine.width!);
+            const height = Math.abs(currentLine.height!);
             if (width >= 5 && height >= 5) {
                 shouldAdd = true;
             }
@@ -324,10 +324,10 @@ const KonvaStage = () => {
                     )}
                     {currentLine && currentLine.shapeType === "rectangle" && (
                         <Rect
-                            x={currentLine.x}
-                            y={currentLine.y}
-                            width={currentLine.width}
-                            height={currentLine.height}
+                            x={currentLine.width! < 0 ? currentLine.x! + currentLine.width! : currentLine.x!}
+                            y={currentLine.height! < 0 ? currentLine.y! + currentLine.height! : currentLine.y!}
+                            width={Math.abs(currentLine.width!)}
+                            height={Math.abs(currentLine.height!)}
                             stroke={currentLine.stroke}
                             strokeWidth={currentLine.strokeWidth}
                             zIndex={zIndex}
