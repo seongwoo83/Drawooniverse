@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type JSX } from "react";
 import { Stage, Layer, Line, Rect, Ellipse, Circle } from "react-konva";
+import type { KonvaEventObject } from "konva/lib/Node";
 import { useDrawing } from "../../hooks/useDrawing";
 import "./KonvaStage.css"
 
@@ -46,10 +47,13 @@ const KonvaStage = () => {
         }
     }, [])
 
-    const handleMouseDown = (e: any) => {
+    const handleMouseDown = (e: KonvaEventObject<MouseEvent>) => {
         if (selectedTool === "") return;
         setIsDrawing(true);
-        const pos = e.target.getStage().getPointerPosition();
+        const stage = e.target.getStage();
+        if (!stage) return;
+        const pos = stage.getPointerPosition();
+        if (!pos) return;
 
         if (selectedTool === "line") {
             setCurrentLine({
@@ -94,10 +98,12 @@ const KonvaStage = () => {
         }
     };
 
-    const handleMouseMove = (e: any) => {
+    const handleMouseMove = (e: KonvaEventObject<MouseEvent>) => {
         if (!isDrawing || !currentLine) return;
         const stage = e.target.getStage();
+        if (!stage) return;
         const pos = stage.getPointerPosition();
+        if (!pos) return;
 
         if (currentLine.shapeType === "line") {
             const newLine = {
@@ -165,6 +171,15 @@ const KonvaStage = () => {
             const height = Math.abs(currentLine.height!);
             if (width >= 5 && height >= 5) {
                 shouldAdd = true;
+                addHistory({
+                    ...currentLine,
+                    x: currentLine.width! < 0 ? currentLine.x! + currentLine.width! : currentLine.x!,
+                    y: currentLine.height! < 0 ? currentLine.y! + currentLine.height! : currentLine.y!,
+                    width: width,
+                    height: height,
+                    zIndex
+                });
+                setZIndex(zIndex + 1);
             }
         } else if (currentLine.shapeType === "ellipse") {
             const radiusX = currentLine.radiusX!;
@@ -181,10 +196,12 @@ const KonvaStage = () => {
     };
 
 
-    const handleStageClick = (e: any) => {
+    const handleStageClick = (e: KonvaEventObject<MouseEvent>) => {
         if(selectedTool !== "polygon") return;
         const stage = e.target.getStage();
+        if (!stage) return;
         const pos = stage.getPointerPosition();
+        if (!pos) return;
         if(!currentPolygon){
             setCurrentPolygon({
                 points: [pos.x, pos.y],
@@ -217,10 +234,13 @@ const KonvaStage = () => {
         }
     }
 
-    const handleStageMouseMove = (e: any) => {
+    const handleStageMouseMove = (e: KonvaEventObject<MouseEvent>) => {
         if(selectedTool === "polygon" && currentPolygon && currentPolygon.isDrawing){
             const stage = e.target.getStage();
+            if (!stage) return;
             const pos = stage.getPointerPosition();
+            if (!pos) return;
+
             const points = currentPolygon.points;
             if(points.length >= 2){
                 const dx = pos.x - points[0];
