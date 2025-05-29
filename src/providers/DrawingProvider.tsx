@@ -1,105 +1,39 @@
-import { useState, useEffect, useRef } from "react";
-import { set, get } from "idb-keyval";
-import type { ReactNode } from "react";
-import type { History } from "../Types";
+import { useRef, type ReactNode } from "react";
+import type { Shape } from "../Types";
 import { DrawingContext } from "../context/DrawingContext";
+import { useToolState } from "../hooks/useToolState";
+import { useHistoryState } from "../hooks/useHistoryState";
+import { useDrawingState } from "../hooks/useDrawingState";
+import { useHistoryActions } from "../hooks/useHistoryActions";
+import { useHistoryPersistence } from "../hooks/useHistoryPersistence";
 
 export const DrawingProvider = ({ children }: { children: ReactNode }) => {
-    const [selectedTool, setSelectedTool] = useState<string>("line");
-    const [strokeWidth, setStrokeWidth] = useState<number>(5);
-    const [strokeColor, setStrokeColor] = useState<string>("#000000");
-    const [currentLine, setCurrentLine] = useState<History | null>(null);
-    const [isDrawing, setIsDrawing] = useState<boolean>(false);
-    const [histories, setHistories] = useState<History[][]>([[]]);
-    const [historyOffset, setHistoryOffset] = useState<number>(0);
-    const [historyIndex, setHistoryIndex] = useState(0);
-    const [zIndex, setZIndex] = useState<number>(0);
+    const toolState = useToolState();
+    const historyState = useHistoryState();
+    const drawingState = useDrawingState();
+    const historyActions = useHistoryActions(historyState, drawingState);
     const isLoaded = useRef<boolean>(false);
 
-    const layers = histories[historyIndex] || [];
-    const MAX_HISTORY = 40;
+    const layers = historyState.histories[historyState.historyIndex] || [];
 
-    const undo = () => {
-        if (historyIndex > 0) setHistoryIndex(historyIndex - 1);
+    const addHistory = (newHistory: Shape) => {
+        historyActions.addHistory(newHistory);
     };
-    const redo = () => {
-        if (historyIndex < histories.length - 1) setHistoryIndex(historyIndex + 1);
-    };
-    const addHistory = (newHistory: History) => {
-        const newHistories = histories.slice(0, historyIndex + 1);
-        const nextLayers = [...histories[historyIndex], newHistory];
-        let updatedHistroies = [...newHistories, nextLayers];
-        let offset = historyOffset;
 
-        if (updatedHistroies.length > MAX_HISTORY) {
-            const diff = updatedHistroies.length - MAX_HISTORY;
-            updatedHistroies = updatedHistroies.slice(diff);
-            offset += diff;
-        }
-        setHistories(updatedHistroies);
-        setHistoryIndex(updatedHistroies.length - 1);
-        setHistoryOffset(offset);
-    }
     const setCurrentHistory = (index: number) => {
-        setHistoryIndex(index);
+        historyState.setHistoryIndex(index);
     };
+
+    useHistoryPersistence(historyState, isLoaded);
 
     const value = {
-        selectedTool,
-        setSelectedTool,
-        strokeWidth,
-        setStrokeWidth,
-        strokeColor,
-        setStrokeColor,
-        currentLine,
-        setCurrentLine,
-        isDrawing,
-        setIsDrawing,
+        ...toolState,
+        ...historyState,
+        ...drawingState,
         layers,
-        histories,
-        setHistories,
-        historyIndex,
-        setHistoryIndex,
-        historyOffset,
         setCurrentHistory,
-        zIndex,
-        setZIndex,
-        undo,
-        redo,
         addHistory,
     }
-
-
-    useEffect(() => {
-        Promise.all([get('histories'), get('historyIndex'), get('historyOffset')]).then(([savedHistories, savedIndex, savedOffset]) => {
-            if (Array.isArray(savedHistories)) {
-                if (Array.isArray(savedHistories[0])) {
-                    setHistories(savedHistories as History[][]);
-                } else {
-                    setHistories([savedHistories as History[]]);
-                }
-            }
-            if(typeof savedIndex === 'number'){
-                setHistoryIndex(savedIndex);
-            }else{
-                setHistoryIndex(
-                    Array.isArray(savedHistories) && savedHistories.length > 0 ? savedHistories.length - 1 : 0
-                );
-            }
-            if(typeof savedOffset === 'number'){
-                setHistoryOffset(savedOffset);
-            }
-            isLoaded.current = true;
-        });
-    }, []);
-
-    useEffect(() => {
-        if (isLoaded.current) {
-            set('histories', histories);
-            set('historyIndex', historyIndex);
-            set('historyOffset', historyOffset);
-        }
-    }, [histories, historyIndex, historyOffset]);
 
     return <DrawingContext.Provider value={value}>{children}</DrawingContext.Provider>
 
