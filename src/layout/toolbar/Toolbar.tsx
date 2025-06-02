@@ -13,7 +13,7 @@ const Toolbar = ()=>{
     return(
         <div className="toolbar_wrapper">
             <div className="toolbar_leftside">
-                <h3 className="toolbar_title">Draw It</h3>
+                <h3 className="toolbar_title">Drawooniverse</h3>
                 <Button title="Undo" onClick={undo} isSelected={false}/>
                 <Button title="Redo" onClick={redo} isSelected={false}/>
             </div>
