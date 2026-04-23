@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Space+Grotesk:wght@400;500;700&display=swap');
 
 :root {
   --bg-base: #0e0e11;
@@ -6,26 +6,38 @@
   --bg-elevated: #1f1f28;
   --border: rgba(255, 255, 255, 0.07);
   --border-light: rgba(255, 255, 255, 0.12);
-  --accent: #a78bfa;
-  --accent-dim: rgba(167, 139, 250, 0.15);
-  --accent-border: rgba(167, 139, 250, 0.3);
+  --accent: #f3994a;
+  --accent-dim: rgba(243, 153, 74, 0.18);
+  --accent-border: rgba(243, 153, 74, 0.34);
   --text-primary: #e8e8f0;
   --text-muted: #6b7280;
   --canvas-bg: #fafaf8;
 }
 
-html, body {
+html {
+  scroll-behavior: smooth;
+}
+
+html, body, #root {
+  min-height: 100%;
+}
+
+body {
   font-family: 'DM Mono', monospace;
   margin: 0;
   padding: 0;
-  background-color: var(--bg-base);
-  color: var(--text-primary);
+  background-color: #fffaf2;
+  color: #17211d;
 }
 
 *, *::before, *::after {
   box-sizing: border-box;
 }
 
-h1, h2, h3 {
+h1, h2, h3, p {
   margin: 0;
+}
+
+a {
+  color: inherit;
 }
