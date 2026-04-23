@@ -2,29 +2,26 @@ import './App.css'
 import Toolbar from './layout/toolbar/Toolbar'
 import HistoryPanel from './layout/historyPanel/HistoryPanel'
 import Canvas from './layout/canvas/Canvas'
+import DrawingTools from './components/drawingTools/DrawingTools'
 import { DrawingProvider } from './DrawingContext'
 
 function App() {
-
   return (
     <DrawingProvider>
       <div className="app_container">
-        <header className='toolbar'>
+        <header className="top_bar">
           <Toolbar />
         </header>
-
-
-        <section className='content_section'>
-          <aside className="history_wrapper">
+        <section className="workspace">
+          <aside className="tool_rail">
+            <DrawingTools />
+          </aside>
+          <main className="canvas_area">
+            <Canvas />
+          </main>
+          <aside className="history_panel_wrapper">
             <HistoryPanel />
           </aside>
-
-
-          <main className='main_content'>
-            <div className='canvas_container'>
-              <Canvas />
-            </div>
-          </main>
         </section>
       </div>
     </DrawingProvider>

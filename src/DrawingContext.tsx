@@ -1,7 +1,14 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect, useRef } from "react";
 import { set, get } from "idb-keyval";
 import type { ReactNode } from "react";
-import type { DrawingContextType, History } from "./Types";
+import type { DrawingContextType, History, ViewportState } from "./Types";
+import {
+    DEFAULT_VIEWPORT,
+    ZOOM_STEP,
+    clampScale,
+    isViewportState,
+} from "./utils/viewport";
 
 const DrawingContext = createContext<DrawingContextType | undefined>(undefined);
 
@@ -15,6 +22,7 @@ export const DrawingProvider = ({ children }: { children: ReactNode }) => {
     const [historyOffset, setHistoryOffset] = useState<number>(0);
     const [historyIndex, setHistoryIndex] = useState(0);
     const [zIndex, setZIndex] = useState<number>(0);
+    const [viewport, setViewport] = useState<ViewportState>(DEFAULT_VIEWPORT);
     const isLoaded = useRef<boolean>(false);
 
     const layers = histories[historyIndex] || [];
@@ -44,6 +52,21 @@ export const DrawingProvider = ({ children }: { children: ReactNode }) => {
     const setCurrentHistory = (index: number) => {
         setHistoryIndex(index);
     };
+    const zoomIn = () => {
+        setViewport((currentViewport) => ({
+            ...currentViewport,
+            scale: clampScale(currentViewport.scale + ZOOM_STEP),
+        }));
+    };
+    const zoomOut = () => {
+        setViewport((currentViewport) => ({
+            ...currentViewport,
+            scale: clampScale(currentViewport.scale - ZOOM_STEP),
+        }));
+    };
+    const resetViewport = () => {
+        setViewport(DEFAULT_VIEWPORT);
+    };
 
     const value = {
         selectedTool,
@@ -68,11 +91,16 @@ export const DrawingProvider = ({ children }: { children: ReactNode }) => {
         undo,
         redo,
         addHistory,
+        viewport,
+        setViewport,
+        zoomIn,
+        zoomOut,
+        resetViewport,
     }
 
 
     useEffect(() => {
-        Promise.all([get('histories'), get('historyIndex'), get('historyOffset')]).then(([savedHistories, savedIndex, savedOffset]) => {
+        Promise.all([get('histories'), get('historyIndex'), get('historyOffset'), get('viewport')]).then(([savedHistories, savedIndex, savedOffset, savedViewport]) => {
             if (Array.isArray(savedHistories)) {
                 if (Array.isArray(savedHistories[0])) {
                     setHistories(savedHistories as History[][]);
@@ -90,6 +118,13 @@ export const DrawingProvider = ({ children }: { children: ReactNode }) => {
             if(typeof savedOffset === 'number'){
                 setHistoryOffset(savedOffset);
             }
+            if (isViewportState(savedViewport)) {
+                setViewport({
+                    scale: clampScale(savedViewport.scale),
+                    x: savedViewport.x,
+                    y: savedViewport.y,
+                });
+            }
             isLoaded.current = true;
         });
     }, []);
@@ -99,8 +134,9 @@ export const DrawingProvider = ({ children }: { children: ReactNode }) => {
             set('histories', histories);
             set('historyIndex', historyIndex);
             set('historyOffset', historyOffset);
+            set('viewport', viewport);
         }
-    }, [histories, historyIndex, historyOffset]);
+    }, [histories, historyIndex, historyOffset, viewport]);
 
     return <DrawingContext.Provider value={value}>{children}</DrawingContext.Provider>
 }

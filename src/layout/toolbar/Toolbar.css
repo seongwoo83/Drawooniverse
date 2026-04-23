@@ -1,22 +1,121 @@
-.toolbar_wrapper{
-    display: flex;
-    width: 100%;
-    gap: 20px;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 15px;
+.toolbar_wrapper {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  height: 100%;
+  gap: 12px;
 }
 
-.toolbar_leftside{
-    display: flex;
-    align-items: center;
-    gap: 10px;
+.toolbar_left {
+  display: flex;
+  align-items: center;
+  min-width: 0;
 }
 
-.toolbar_title{
-    font-size: 20px;
-    font-weight: bold;
-    color: #253550;
-    flex: 1;
-    margin: 0;
+.toolbar_title {
+  font-family: 'DM Serif Display', serif;
+  font-style: italic;
+  font-size: 20px;
+  font-weight: 400;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  user-select: none;
+}
+
+.toolbar_right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.toolbar_divider {
+  width: 1px;
+  height: 20px;
+  background-color: var(--border-light);
+  margin: 0 8px;
+}
+
+.icon_btn {
+  background: var(--bg-elevated);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: background 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s;
+  padding: 0;
+}
+
+.icon_btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-primary);
+  border-color: var(--border-light);
+}
+
+.icon_btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.icon_btn:disabled:hover {
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+  border-color: transparent;
+}
+
+.zoom_controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.zoom_readout {
+  height: 32px;
+  min-width: 60px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-primary);
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.zoom_readout:hover {
+  border-color: var(--accent-border);
+  background: var(--accent-dim);
+}
+
+.toolbar_divider_compact {
+  margin: 0 6px;
+}
+
+@media (max-width: 920px) {
+  .toolbar_wrapper {
+    padding: 0 10px;
+  }
+
+  .toolbar_title {
+    font-size: 18px;
+  }
+
+  .toolbar_divider {
+    margin: 0 4px;
+  }
+
+  .zoom_readout {
+    min-width: 50px;
+    padding: 0 8px;
+  }
 }
