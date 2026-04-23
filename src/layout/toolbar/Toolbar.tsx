@@ -1,6 +1,6 @@
 import ColorPicker from '../../components/colorPicker/ColorPicker';
 import StrokeWidth from '../../components/strokeWidth/StrokeWidth';
-import { useDrawing } from '../../DrawingContext';
+import { useDrawing } from '../../hooks/useDrawing';
 import { MAX_SCALE, MIN_SCALE } from '../../utils/viewport';
 import './Toolbar.css'
 

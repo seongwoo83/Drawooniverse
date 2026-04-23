@@ -2,8 +2,8 @@ import { useEffect, useRef, useState, type DragEvent, type JSX } from "react";
 import { Stage, Layer, Line, Rect, Ellipse, Circle, Image as KonvaImage } from "react-konva";
 import type { Stage as KonvaStageType } from "konva/lib/Stage";
 import type { KonvaEventObject } from "konva/lib/Node";
-import { useDrawing } from "../../DrawingContext";
-import type { History, ViewportState } from "../../Types";
+import { useDrawing } from "../../hooks/useDrawing";
+import type { ImageShape, Shape, ViewportState } from "../../Types";
 import {
     DEFAULT_VIEWPORT,
     MAX_SCALE,
@@ -16,7 +16,7 @@ import {
     type Point,
     type Size,
 } from "../../utils/viewport";
-import "./KonvaStage.css"
+import "./KonvaStage.css";
 
 type PolygonDraft = {
     points: number[];
@@ -99,15 +99,10 @@ const fitDroppedImage = (width: number, height: number, viewport: ViewportState,
     };
 };
 
-const CanvasImageShape = ({ history }: { history: History }) => {
+const CanvasImageShape = ({ history }: { history: ImageShape }) => {
     const [image, setImage] = useState<HTMLImageElement | null>(null);
 
     useEffect(() => {
-        if (!history.imageSrc) {
-            setImage(null);
-            return;
-        }
-
         const nextImage = new window.Image();
         nextImage.onload = () => setImage(nextImage);
         nextImage.src = history.imageSrc;
@@ -176,7 +171,7 @@ const KonvaStage = () => {
     const didPanRef = useRef(false);
     const [dimensions, setDimensions] = useState<Size>({
         width: 0,
-        height: 0
+        height: 0,
     });
     const [currentPolygon, setCurrentPolygon] = useState<PolygonDraft | null>(null);
     const [hoverPos, setHoverPos] = useState<Point | null>(null);
@@ -209,19 +204,18 @@ const KonvaStage = () => {
             if (containerRef.current) {
                 setDimensions({
                     width: containerRef.current.offsetWidth,
-                    height: containerRef.current.offsetHeight === 0 ? containerRef.current.parentElement!.offsetHeight - 30 : containerRef.current.offsetHeight
-                })
+                    height: containerRef.current.offsetHeight === 0 ? containerRef.current.parentElement!.offsetHeight - 30 : containerRef.current.offsetHeight,
+                });
             }
         };
 
         updateDimensions();
-
-        window.addEventListener('resize', updateDimensions);
+        window.addEventListener("resize", updateDimensions);
 
         return () => {
-            window.removeEventListener('resize', updateDimensions)
-        }
-    }, [])
+            window.removeEventListener("resize", updateDimensions);
+        };
+    }, []);
 
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
@@ -331,27 +325,30 @@ const KonvaStage = () => {
             return;
         }
 
-        if (selectedTool === "") return;
+        if (selectedTool === "") {
+            return;
+        }
+
         setIsDrawing(true);
         const pos = screenToWorld(pointer, viewport);
 
         if (selectedTool === "line") {
             setCurrentLine({
-                points: [],
+                points: [pos.x, pos.y, pos.x, pos.y],
                 start: { x: pos.x, y: pos.y },
                 end: { x: pos.x, y: pos.y },
                 stroke: strokeColor,
                 strokeWidth,
                 zIndex,
-                shapeType: "line"
+                shapeType: "line",
             });
         } else if (selectedTool === "freehand") {
             setCurrentLine({
                 points: [pos.x, pos.y],
                 stroke: strokeColor,
-                strokeWidth: strokeWidth,
-                zIndex: zIndex,
-                shapeType: "freehand"
+                strokeWidth,
+                zIndex,
+                shapeType: "freehand",
             });
         } else if (selectedTool === "rectangle") {
             setCurrentLine({
@@ -360,10 +357,10 @@ const KonvaStage = () => {
                 width: 0,
                 height: 0,
                 stroke: strokeColor,
-                strokeWidth: strokeWidth,
-                zIndex: zIndex,
-                shapeType: "rectangle"
-            })
+                strokeWidth,
+                zIndex,
+                shapeType: "rectangle",
+            });
         } else if (selectedTool === "ellipse") {
             setCurrentLine({
                 x: pos.x,
@@ -371,10 +368,10 @@ const KonvaStage = () => {
                 radiusX: 0,
                 radiusY: 0,
                 stroke: strokeColor,
-                strokeWidth: strokeWidth,
-                zIndex: zIndex,
-                shapeType: "ellipse"
-            })
+                strokeWidth,
+                zIndex,
+                shapeType: "ellipse",
+            });
         }
     };
 
@@ -390,11 +387,14 @@ const KonvaStage = () => {
                 return;
             }
 
-            const nextViewport = clampViewportPosition({
-                ...panStart.viewport,
-                x: panStart.viewport.x + (pointer.x - panStart.pointer.x),
-                y: panStart.viewport.y + (pointer.y - panStart.pointer.y),
-            }, dimensions);
+            const nextViewport = clampViewportPosition(
+                {
+                    ...panStart.viewport,
+                    x: panStart.viewport.x + (pointer.x - panStart.pointer.x),
+                    y: panStart.viewport.y + (pointer.y - panStart.pointer.y),
+                },
+                dimensions,
+            );
 
             if (nextViewport.x !== viewport.x || nextViewport.y !== viewport.y) {
                 didPanRef.current = true;
@@ -403,44 +403,37 @@ const KonvaStage = () => {
             return;
         }
 
-        if (!isDrawing || !currentLine) return;
+        if (!isDrawing || !currentLine) {
+            return;
+        }
+
         const pos = getPointerWorldPosition(stage, viewport);
         if (!pos) {
             return;
         }
 
         if (currentLine.shapeType === "line") {
-            const newLine = {
+            setCurrentLine({
                 ...currentLine,
-                end: { x: pos.x, y: pos.y }
-            };
-            setCurrentLine(newLine);
+                end: { x: pos.x, y: pos.y },
+            });
         } else if (currentLine.shapeType === "freehand") {
-            const newLine = {
+            setCurrentLine({
                 ...currentLine,
-                points: [...(currentLine.points || []), pos.x, pos.y],
-            };
-            setCurrentLine(newLine);
+                points: [...currentLine.points, pos.x, pos.y],
+            });
         } else if (currentLine.shapeType === "rectangle") {
-            const newRect = {
+            setCurrentLine({
                 ...currentLine,
-                width: pos.x - currentLine.x!,
-                height: pos.y - currentLine.y!
-            };
-            setCurrentLine(newRect);
+                width: pos.x - currentLine.x,
+                height: pos.y - currentLine.y,
+            });
         } else if (currentLine.shapeType === "ellipse") {
-            const dx = pos.x - currentLine.x!;
-            const dy = pos.y - currentLine.y!;
-            const radius = {
-                radiusX: Math.abs(dx),
-                radiusY: Math.abs(dy)
-            }
-            const newEllipse = {
+            setCurrentLine({
                 ...currentLine,
-                radiusX: radius.radiusX,
-                radiusY: radius.radiusY
-            }
-            setCurrentLine(newEllipse);
+                radiusX: Math.abs(pos.x - currentLine.x),
+                radiusY: Math.abs(pos.y - currentLine.y),
+            });
         }
     };
 
@@ -450,48 +443,56 @@ const KonvaStage = () => {
             return;
         }
 
-        if (!isDrawing || !currentLine) return;
+        if (!isDrawing || !currentLine) {
+            return;
+        }
+
         setIsDrawing(false);
 
-        let shouldAdd = false;
-
         if (currentLine.shapeType === "line") {
-            const { start, end } = currentLine;
-            const dist = Math.sqrt(Math.pow(end!.x - start!.x, 2) + Math.pow(end!.y - start!.y, 2));
+            const dx = currentLine.end.x - currentLine.start.x;
+            const dy = currentLine.end.y - currentLine.start.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
             if (dist >= 5) {
                 addHistory({
                     ...currentLine,
-                    points: [start!.x, start!.y, end!.x, end!.y]
+                    points: [currentLine.start.x, currentLine.start.y, currentLine.end.x, currentLine.end.y],
                 });
                 setZIndex(zIndex + 1);
             }
         } else if (currentLine.shapeType === "freehand") {
             const pts = currentLine.points;
-            if (pts && pts.length >= 4) {
+            if (pts.length >= 4) {
                 const dx = pts[pts.length - 2] - pts[0];
                 const dy = pts[pts.length - 1] - pts[1];
                 const dist = Math.sqrt(dx * dx + dy * dy);
                 if (dist >= 5) {
-                    shouldAdd = true;
+                    addHistory({ ...currentLine, zIndex });
+                    setZIndex(zIndex + 1);
                 }
             }
         } else if (currentLine.shapeType === "rectangle") {
-            const width = currentLine.width!;
-            const height = currentLine.height!;
+            const width = currentLine.width;
+            const height = currentLine.height;
             if (Math.abs(width) >= 5 && Math.abs(height) >= 5) {
-                shouldAdd = true;
+                addHistory({
+                    ...currentLine,
+                    x: width < 0 ? currentLine.x + width : currentLine.x,
+                    y: height < 0 ? currentLine.y + height : currentLine.y,
+                    width: Math.abs(width),
+                    height: Math.abs(height),
+                    zIndex,
+                });
+                setZIndex(zIndex + 1);
             }
         } else if (currentLine.shapeType === "ellipse") {
-            const radiusX = currentLine.radiusX!;
-            const radiusY = currentLine.radiusY!;
-            if (radiusX >= 5 && radiusY >= 5) {
-                shouldAdd = true;
+            if (currentLine.radiusX >= 5 && currentLine.radiusY >= 5) {
+                addHistory({ ...currentLine, zIndex });
+                setZIndex(zIndex + 1);
             }
         }
-        if (shouldAdd) {
-            addHistory({ ...currentLine, zIndex });
-            setZIndex(zIndex + 1);
-        }
+
         setCurrentLine(null);
     };
 
@@ -501,7 +502,10 @@ const KonvaStage = () => {
             return;
         }
 
-        if (selectedTool !== "polygon" || isPanning) return;
+        if (selectedTool !== "polygon" || isPanning) {
+            return;
+        }
+
         const stage = evt.target.getStage();
         if (!stage) {
             return;
@@ -515,41 +519,41 @@ const KonvaStage = () => {
         if (!currentPolygon) {
             setCurrentPolygon({
                 points: [pos.x, pos.y],
-                isDrawing: true
-            })
+                isDrawing: true,
+            });
         } else {
             const points = currentPolygon.points;
             const dx = pos.x - points[0];
             const dy = pos.y - points[1];
             const dist = Math.sqrt(dx * dx + dy * dy);
+
             if (dist < 10 && points.length >= 6) {
                 addHistory({
                     points: [...points, points[0], points[1]],
                     stroke: strokeColor,
-                    strokeWidth: strokeWidth,
-                    zIndex: zIndex,
-                    shapeType: "polygon"
+                    strokeWidth,
+                    zIndex,
+                    shapeType: "polygon",
                 });
                 setZIndex(zIndex + 1);
                 setCurrentPolygon(null);
                 setIsSnaping(false);
                 setHoverPos(null);
             } else {
-                const newPolygon = {
+                setCurrentPolygon({
                     ...currentPolygon,
-                    points: [...points, pos.x, pos.y]
-                }
-                setCurrentPolygon(newPolygon);
+                    points: [...points, pos.x, pos.y],
+                });
             }
         }
-    }
+    };
 
     const handleStageMouseMove = (evt: KonvaEventObject<NativeMouseEvent>) => {
         if (isPanning) {
             return;
         }
 
-        if (selectedTool === "polygon" && currentPolygon && currentPolygon.isDrawing) {
+        if (selectedTool === "polygon" && currentPolygon?.isDrawing) {
             const stage = evt.target.getStage();
             if (!stage) {
                 return;
@@ -577,7 +581,7 @@ const KonvaStage = () => {
                 setHoverPos(pos);
             }
         }
-    }
+    };
 
     const handleWheel = (evt: KonvaEventObject<NativeWheelEvent>) => {
         evt.evt.preventDefault();
@@ -732,10 +736,12 @@ const KonvaStage = () => {
                     ))}
                 </Layer>
                 <Layer>
-                    {sortedLayers.map((history, index) => {
+                    {sortedLayers.map((history: Shape, index) => {
                         if (history.shapeType === "image") {
                             return <CanvasImageShape key={`image-${index}-${history.zIndex}`} history={history} />;
-                        } else if (history.shapeType === "line" || history.shapeType === "freehand") {
+                        }
+
+                        if (history.shapeType === "line" || history.shapeType === "freehand") {
                             return (
                                 <Line
                                     key={index}
@@ -746,8 +752,10 @@ const KonvaStage = () => {
                                     lineCap="round"
                                     lineJoin="round"
                                 />
-                            )
-                        } else if (history.shapeType === "rectangle") {
+                            );
+                        }
+
+                        if (history.shapeType === "rectangle") {
                             return (
                                 <Rect
                                     key={index}
@@ -759,21 +767,25 @@ const KonvaStage = () => {
                                     strokeWidth={history.strokeWidth}
                                     zIndex={history.zIndex}
                                 />
-                            )
-                        } else if (history.shapeType === "ellipse") {
+                            );
+                        }
+
+                        if (history.shapeType === "ellipse") {
                             return (
                                 <Ellipse
                                     key={index}
                                     x={history.x}
                                     y={history.y}
-                                    radiusX={history.radiusX!}
-                                    radiusY={history.radiusY!}
+                                    radiusX={history.radiusX}
+                                    radiusY={history.radiusY}
                                     stroke={history.stroke}
                                     strokeWidth={history.strokeWidth}
                                     zIndex={history.zIndex}
                                 />
-                            )
-                        } else if (history.shapeType === "polygon") {
+                            );
+                        }
+
+                        if (history.shapeType === "polygon") {
                             return (
                                 <Line
                                     key={index}
@@ -781,11 +793,11 @@ const KonvaStage = () => {
                                     stroke={history.stroke}
                                     strokeWidth={history.strokeWidth}
                                     zIndex={history.zIndex}
-                                    closed={true}
+                                    closed
                                     lineCap="round"
                                     lineJoin="round"
                                 />
-                            )
+                            );
                         }
 
                         return null;
@@ -793,7 +805,9 @@ const KonvaStage = () => {
                     {currentLine && (currentLine.shapeType === "line" || currentLine.shapeType === "freehand") && (
                         <Line
                             points={
-                                currentLine.shapeType === "line" ? [currentLine.start!.x, currentLine.start!.y, currentLine.end!.x, currentLine.end!.y] : currentLine.points
+                                currentLine.shapeType === "line"
+                                    ? [currentLine.start.x, currentLine.start.y, currentLine.end.x, currentLine.end.y]
+                                    : currentLine.points
                             }
                             stroke={currentLine.stroke}
                             strokeWidth={currentLine.strokeWidth}
@@ -805,10 +819,10 @@ const KonvaStage = () => {
                     )}
                     {currentLine && currentLine.shapeType === "rectangle" && (
                         <Rect
-                            x={currentLine.x}
-                            y={currentLine.y}
-                            width={currentLine.width}
-                            height={currentLine.height}
+                            x={currentLine.width < 0 ? currentLine.x + currentLine.width : currentLine.x}
+                            y={currentLine.height < 0 ? currentLine.y + currentLine.height : currentLine.y}
+                            width={Math.abs(currentLine.width)}
+                            height={Math.abs(currentLine.height)}
                             stroke={currentLine.stroke}
                             strokeWidth={currentLine.strokeWidth}
                             zIndex={zIndex}
@@ -818,47 +832,42 @@ const KonvaStage = () => {
                         <Ellipse
                             x={currentLine.x}
                             y={currentLine.y}
-                            radiusX={currentLine.radiusX!}
-                            radiusY={currentLine.radiusY!}
+                            radiusX={currentLine.radiusX}
+                            radiusY={currentLine.radiusY}
                             stroke={currentLine.stroke}
                             strokeWidth={currentLine.strokeWidth}
                             zIndex={zIndex}
                         />
                     )}
-                    {
-                        selectedTool === "polygon" && currentPolygon && (
-                            <>
-                                <Line
-                                    points={hoverPos ? [...currentPolygon.points, hoverPos.x, hoverPos.y] : currentPolygon.points}
-                                    stroke={strokeColor}
-                                    strokeWidth={1}
-                                    closed={isSnaping}
-                                    zIndex={zIndex}
-                                    lineCap="round"
-                                    lineJoin="round"
-                                />
-                                {
-                                    currentPolygon.points.length >= 2 &&
-                                    currentPolygon.points.reduce((acc: JSX.Element[], val, idx, arr) => {
-                                        if (idx % 2 === 0 && arr[idx + 1] !== undefined) {
-                                            acc.push(
-                                                <Circle
-                                                    key={idx}
-                                                    x={val}
-                                                    y={arr[idx + 1]}
-                                                    radius={6}
-                                                    fill={strokeColor}
-                                                    strokeWidth={2}
-                                                />
-                                            );
-                                        }
-                                        return acc;
-
-                                    }, [])
-                                }
-                            </>
-                        )
-                    }
+                    {selectedTool === "polygon" && currentPolygon && (
+                        <>
+                            <Line
+                                points={hoverPos ? [...currentPolygon.points, hoverPos.x, hoverPos.y] : currentPolygon.points}
+                                stroke={strokeColor}
+                                strokeWidth={1}
+                                closed={isSnaping}
+                                zIndex={zIndex}
+                                lineCap="round"
+                                lineJoin="round"
+                            />
+                            {currentPolygon.points.length >= 2 &&
+                                currentPolygon.points.reduce((acc: JSX.Element[], val, idx, arr) => {
+                                    if (idx % 2 === 0 && arr[idx + 1] !== undefined) {
+                                        acc.push(
+                                            <Circle
+                                                key={idx}
+                                                x={val}
+                                                y={arr[idx + 1]}
+                                                radius={6}
+                                                fill={strokeColor}
+                                                strokeWidth={2}
+                                            />,
+                                        );
+                                    }
+                                    return acc;
+                                }, [])}
+                        </>
+                    )}
                 </Layer>
             </Stage>
             <div className="viewport_hud">

@@ -2,8 +2,8 @@ import './App.css'
 import Toolbar from './layout/toolbar/Toolbar'
 import HistoryPanel from './layout/historyPanel/HistoryPanel'
 import Canvas from './layout/canvas/Canvas'
+import { DrawingProvider } from './providers/DrawingProvider'
 import DrawingTools from './components/drawingTools/DrawingTools'
-import { DrawingProvider } from './DrawingContext'
 
 function App() {
   return (
