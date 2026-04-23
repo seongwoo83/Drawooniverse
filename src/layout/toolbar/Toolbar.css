@@ -12,6 +12,7 @@
   display: flex;
   align-items: center;
   min-width: 0;
+  flex-shrink: 1;
 }
 
 .toolbar_title {
@@ -29,6 +30,7 @@
   align-items: center;
   gap: 4px;
   min-width: 0;
+  flex-shrink: 0;
 }
 
 .toolbar_divider {
@@ -95,6 +97,35 @@
 .zoom_readout:hover {
   border-color: var(--accent-border);
   background: var(--accent-dim);
+}
+
+.toolbar_action_btn {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-primary);
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, opacity 0.15s;
+}
+
+.toolbar_action_btn:hover {
+  border-color: var(--accent-border);
+  background: var(--accent-dim);
+}
+
+.toolbar_action_btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.toolbar_action_btn:disabled:hover {
+  border-color: var(--border);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .toolbar_divider_compact {
