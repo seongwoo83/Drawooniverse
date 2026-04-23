@@ -1,4 +1,20 @@
-### React + Typescript + Konva.js
+# Drawooniverse
+
+Drawooniverse is a React, TypeScript, and Konva drawing canvas published through GitHub Pages.
+
+## Live site
+
+- GitHub Pages URL: `https://seongwoo83.github.io/Drawooniverse/`
+- Deployment source: GitHub Actions
+- Deployment trigger: push to `main`
+
+To make Pages serve the workflow output, set the repository Pages source to `GitHub Actions` in GitHub settings.
+
+## Site flow
+
+- Landing page: product introduction and entry point
+- App page: `#/app`
+- Main CTA: opens the drawing workspace directly in the browser
 
 ## Development
 
@@ -8,44 +24,22 @@ Install dependencies:
 npm install
 ```
 
-Run the Vite app in Electron:
+Run the browser app locally:
 
 ```bash
-npm run dev
+npm run dev:web
 ```
-
-This starts the Vite dev server and opens the Electron shell once the renderer is ready.
 
 ## Build
 
-Create the production web and Electron bundles:
+Create only the static web bundle used by GitHub Pages:
 
 ```bash
-npm run build
+npm run build:web
 ```
 
-Generate unsigned macOS installer artifacts:
+## Browser behavior
 
-```bash
-npm run dist
-```
-
-Installers are written to `release/`.
-
-## PNG Export
-
-Inside Electron, PNG export uses the native macOS save dialog. In a regular browser, it falls back to the existing download behavior.
-
-## Unsigned macOS App
-
-The generated app is unsigned. macOS may block the first launch.
-
-If that happens:
-
-1. Open `System Settings -> Privacy & Security`.
-2. Find the blocked app message near the bottom.
-3. Click `Open Anyway`.
-
-## Future Signing Upgrade
-
-This setup is structured so Developer ID signing and notarization can be added later through `electron-builder` without changing the renderer bridge.
+- The app runs directly in the browser from GitHub Pages.
+- Canvas history and viewport state are stored locally with IndexedDB.
+- PNG export downloads the image in the browser.

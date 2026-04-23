@@ -16,10 +16,9 @@
 }
 
 .toolbar_title {
-  font-family: 'DM Serif Display', serif;
-  font-style: italic;
+  font-family: 'Space Grotesk', sans-serif;
   font-size: 20px;
-  font-weight: 400;
+  font-weight: 700;
   color: var(--text-primary);
   letter-spacing: -0.02em;
   user-select: none;
