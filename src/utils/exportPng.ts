@@ -203,6 +203,18 @@ const downloadDataUrl = (dataUrl: string, filename: string) => {
     link.remove();
 };
 
+const saveDataUrl = async (dataUrl: string, filename: string) => {
+    if (window.desktop?.savePng) {
+        await window.desktop.savePng({
+            defaultFileName: filename,
+            dataUrl,
+        });
+        return;
+    }
+
+    downloadDataUrl(dataUrl, filename);
+};
+
 const createDetachedContainer = () => {
     const container = document.createElement("div");
     container.style.position = "fixed";
@@ -267,7 +279,7 @@ const exportShapesToTransparentPng = async (shapes: Shape[]) => {
         layer.draw();
 
         const dataUrl = stage.toDataURL({ pixelRatio: 1 });
-        downloadDataUrl(dataUrl, EXPORT_FILENAME);
+        await saveDataUrl(dataUrl, EXPORT_FILENAME);
     } finally {
         stage.destroy();
         container.remove();
