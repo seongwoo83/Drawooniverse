@@ -40,7 +40,7 @@ const ResetViewIcon = () => (
 )
 
 const Toolbar = () => {
-  const { undo, redo, viewport, zoomIn, zoomOut, resetViewport } = useDrawing();
+  const { undo, redo, viewport, zoomIn, zoomOut, resetViewport, exportToPng, canExport } = useDrawing();
   const zoomPercent = Math.round(viewport.scale * 100);
 
   return (
@@ -70,6 +70,10 @@ const Toolbar = () => {
             <ResetViewIcon />
           </button>
         </div>
+        <div className="toolbar_divider" />
+        <button className="toolbar_action_btn" onClick={() => void exportToPng()} disabled={!canExport} title="Export transparent PNG">
+          Export PNG
+        </button>
         <div className="toolbar_divider" />
         <ColorPicker />
         <div className="toolbar_divider toolbar_divider_compact" />

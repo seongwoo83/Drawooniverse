@@ -86,6 +86,8 @@ interface DrawingContextType {
     zoomIn: () => void;
     zoomOut: () => void;
     resetViewport: () => void;
+    exportToPng: () => Promise<void>;
+    canExport: boolean;
 }
 
 interface ViewportState {
