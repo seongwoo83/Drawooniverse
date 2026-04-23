@@ -4,10 +4,86 @@
     border-radius: 8px;
     min-width: 0;
     display: flex;
-    background-color: #fff;
+    background-color: var(--canvas-bg);
+    overflow: hidden;
+    background-image:
+        radial-gradient(circle at top left, rgba(167, 139, 250, 0.08), transparent 30%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0));
 }
 
 .konva_stage > div{
     flex: 1;
     min-width: 0;
+}
+
+.konva_stage.is-drawing {
+    cursor: crosshair;
+}
+
+.konva_stage.is-pan-ready {
+    cursor: grab;
+}
+
+.konva_stage.is-panning {
+    cursor: grabbing;
+}
+
+.konva_stage.is-drop-target {
+    box-shadow: inset 0 0 0 1px rgba(167, 139, 250, 0.4);
+}
+
+.viewport_hud {
+    position: absolute;
+    right: 14px;
+    bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 999px;
+    background: rgba(23, 23, 29, 0.76);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(10px);
+    color: var(--text-primary);
+    font-size: 11px;
+    pointer-events: none;
+}
+
+.viewport_hint {
+    color: var(--text-muted);
+}
+
+.drop_overlay {
+    position: absolute;
+    inset: 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    border-radius: 14px;
+    border: 1px dashed rgba(167, 139, 250, 0.42);
+    background: rgba(23, 23, 29, 0.74);
+    backdrop-filter: blur(8px);
+    color: var(--text-primary);
+    text-align: center;
+    padding: 20px;
+    pointer-events: none;
+}
+
+.drop_overlay strong {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.drop_overlay span {
+    color: rgba(232, 232, 240, 0.72);
+    font-size: 11px;
+    line-height: 1.6;
+    max-width: 320px;
+}
+
+.drop_overlay.has-error {
+    border-color: rgba(245, 158, 11, 0.45);
+    background: rgba(53, 33, 16, 0.82);
 }

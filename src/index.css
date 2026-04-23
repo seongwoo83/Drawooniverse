@@ -1,17 +1,31 @@
-@font-face {
-    font-family: 'Pretendard-Regular';
-    src: url('https://fastly.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Regular.woff') format('woff');
-    font-weight: 400;
-    font-style: normal;
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&display=swap');
+
+:root {
+  --bg-base: #0e0e11;
+  --bg-surface: #17171d;
+  --bg-elevated: #1f1f28;
+  --border: rgba(255, 255, 255, 0.07);
+  --border-light: rgba(255, 255, 255, 0.12);
+  --accent: #a78bfa;
+  --accent-dim: rgba(167, 139, 250, 0.15);
+  --accent-border: rgba(167, 139, 250, 0.3);
+  --text-primary: #e8e8f0;
+  --text-muted: #6b7280;
+  --canvas-bg: #fafaf8;
 }
 
-html, body{
-    font-family: 'Pretendard-Regular', sans-serif;
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+html, body {
+  font-family: 'DM Mono', monospace;
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-base);
+  color: var(--text-primary);
 }
 
-h3{
-    margin: 10px 0;
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+h1, h2, h3 {
+  margin: 0;
 }

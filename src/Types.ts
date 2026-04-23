@@ -1,3 +1,5 @@
+import type { Dispatch, SetStateAction } from "react";
+
 type ButtonProps = {
     title: string;
     onClick: () => void;
@@ -42,6 +44,18 @@ interface DrawingContextType {
     undo: () => void;
     // 다시 실행
     redo: () => void;
+    // 캔버스 뷰포트
+    viewport: ViewportState;
+    setViewport: Dispatch<SetStateAction<ViewportState>>;
+    zoomIn: () => void;
+    zoomOut: () => void;
+    resetViewport: () => void;
+}
+
+interface ViewportState {
+    scale: number;
+    x: number;
+    y: number;
 }
 
 interface History {
@@ -51,7 +65,7 @@ interface History {
     stroke: string;
     strokeWidth: number;
     zIndex: number;
-    shapeType: "line" | "rectangle" | "ellipse" | "polygon" | "freehand";
+    shapeType: "line" | "rectangle" | "ellipse" | "polygon" | "freehand" | "image";
     x?: number;
     y?: number;
     radiusX?: number;
@@ -59,6 +73,8 @@ interface History {
     width?: number;
     height?: number;
     radius?: number;
+    imageSrc?: string;
+    imageName?: string;
 }
 
-export type {ButtonProps, DrawingContextType, History};
+export type {ButtonProps, DrawingContextType, History, ViewportState};
