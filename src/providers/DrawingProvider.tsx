@@ -6,6 +6,7 @@ import { useHistoryState } from "../hooks/useHistoryState";
 import { useDrawingState } from "../hooks/useDrawingState";
 import { useHistoryActions } from "../hooks/useHistoryActions";
 import { useHistoryPersistence } from "../hooks/useHistoryPersistence";
+import { exportShapesToTransparentPng } from "../utils/exportPng";
 
 export const DrawingProvider = ({ children }: { children: ReactNode }) => {
     const toolState = useToolState();
@@ -24,7 +25,18 @@ export const DrawingProvider = ({ children }: { children: ReactNode }) => {
         historyState.setHistoryIndex(index);
     };
 
-    useHistoryPersistence(historyState, isLoaded);
+    const canExport = layers.length > 0;
+
+    const exportToPng = async () => {
+        try {
+            await exportShapesToTransparentPng(layers);
+        } catch (error) {
+            console.error(error);
+            window.alert("PNG export failed. Please try again.");
+        }
+    };
+
+    useHistoryPersistence(historyState, drawingState, isLoaded);
 
     const value = {
         ...toolState,
@@ -33,8 +45,9 @@ export const DrawingProvider = ({ children }: { children: ReactNode }) => {
         layers,
         setCurrentHistory,
         addHistory,
-    }
+        canExport,
+        exportToPng,
+    };
 
-    return <DrawingContext.Provider value={value}>{children}</DrawingContext.Provider>
-
-} 
+    return <DrawingContext.Provider value={value}>{children}</DrawingContext.Provider>;
+};

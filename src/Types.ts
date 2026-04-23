@@ -1,3 +1,5 @@
+import type { Dispatch, SetStateAction } from "react";
+
 type ButtonProps = {
     title: string;
     onClick: () => void;
@@ -44,45 +46,65 @@ interface PolygonShape extends BaseShape {
     points: number[];
 }
 
-type Shape = LineShape | FreehandShape | RectangleShape | EllipseShape | PolygonShape;
+interface ImageShape extends BaseShape {
+    shapeType: "image";
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    imageSrc: string;
+    imageName?: string;
+}
+
+type Shape = LineShape | FreehandShape | RectangleShape | EllipseShape | PolygonShape | ImageShape;
 
 interface DrawingContextType {
-    // 선택된 도구
     selectedTool: string;
     setSelectedTool: (tool: string) => void;
-    // 선 너비
     strokeWidth: number;
     setStrokeWidth: (width: number) => void;
-    // 선 색상
     strokeColor: string;
     setStrokeColor: (color: string) => void;
-    // 현재 선
     currentLine: Shape | null;
     setCurrentLine: (line: Shape | null) => void;
-    // 레이어
     layers: Shape[];
-    // 작업 내역
     histories: Shape[][];
-    // 작업 내역 순서
     historyIndex: number;
     setHistoryIndex: (index: number) => void;
     setHistories: (histories: Shape[][]) => void;
-    // 작업 내역 오프셋
     historyOffset: number;
-    // 현재 작업 내역
     setCurrentHistory: (index: number) => void;
-    // zIndex
     zIndex: number;
     setZIndex: (zIndex: number) => void;
-    // 그리기 상태
     isDrawing: boolean;
     setIsDrawing: (isDrawing: boolean) => void;
-    // 작업 내역 추가
     addHistory: (history: Shape) => void;
-    // 되돌리기
     undo: () => void;
-    // 다시 실행
     redo: () => void;
+    viewport: ViewportState;
+    setViewport: Dispatch<SetStateAction<ViewportState>>;
+    zoomIn: () => void;
+    zoomOut: () => void;
+    resetViewport: () => void;
+    exportToPng: () => Promise<void>;
+    canExport: boolean;
 }
 
-export type {ButtonProps, DrawingContextType, Shape, LineShape, FreehandShape, RectangleShape, EllipseShape, PolygonShape};
+interface ViewportState {
+    scale: number;
+    x: number;
+    y: number;
+}
+
+export type {
+    ButtonProps,
+    DrawingContextType,
+    ViewportState,
+    Shape,
+    LineShape,
+    FreehandShape,
+    RectangleShape,
+    EllipseShape,
+    PolygonShape,
+    ImageShape,
+};

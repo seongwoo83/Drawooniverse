@@ -7,7 +7,7 @@ export const useHistoryActions = (historyState: ReturnType<typeof useHistoryStat
 
     const addHistory = (newHistory: Shape) => {
         const { histories, setHistories, historyIndex, setHistoryIndex } = historyState;
-        const { zIndex, setZIndex } = drawingState;
+        void drawingState;
 
         const newHistories = histories.slice(0, historyIndex + 1);
         const nextLayers = [...histories[historyIndex], newHistory];
@@ -20,7 +20,6 @@ export const useHistoryActions = (historyState: ReturnType<typeof useHistoryStat
         }
         setHistories(updatedHistroies);
         setHistoryIndex(updatedHistroies.length - 1);
-        setZIndex(zIndex + 1);
     };
     
     return { addHistory };
