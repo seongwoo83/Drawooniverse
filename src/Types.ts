@@ -1,3 +1,5 @@
+import type { Dispatch, SetStateAction } from "react";
+
 type ButtonProps = {
     title: string;
     onClick: () => void;
@@ -44,7 +46,17 @@ interface PolygonShape extends BaseShape {
     points: number[];
 }
 
-type Shape = LineShape | FreehandShape | RectangleShape | EllipseShape | PolygonShape;
+interface ImageShape extends BaseShape {
+    shapeType: "image";
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    imageSrc: string;
+    imageName?: string;
+}
+
+type Shape = LineShape | FreehandShape | RectangleShape | EllipseShape | PolygonShape | ImageShape;
 
 interface DrawingContextType {
     // 선택된 도구
@@ -83,6 +95,29 @@ interface DrawingContextType {
     undo: () => void;
     // 다시 실행
     redo: () => void;
+    // 캔버스 뷰포트
+    viewport: ViewportState;
+    setViewport: Dispatch<SetStateAction<ViewportState>>;
+    zoomIn: () => void;
+    zoomOut: () => void;
+    resetViewport: () => void;
 }
 
-export type {ButtonProps, DrawingContextType, Shape, LineShape, FreehandShape, RectangleShape, EllipseShape, PolygonShape};
+interface ViewportState {
+    scale: number;
+    x: number;
+    y: number;
+}
+
+export type {
+    ButtonProps,
+    DrawingContextType,
+    ViewportState,
+    Shape,
+    LineShape,
+    FreehandShape,
+    RectangleShape,
+    EllipseShape,
+    PolygonShape,
+    ImageShape,
+};

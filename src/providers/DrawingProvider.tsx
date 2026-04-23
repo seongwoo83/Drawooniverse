@@ -24,7 +24,7 @@ export const DrawingProvider = ({ children }: { children: ReactNode }) => {
         historyState.setHistoryIndex(index);
     };
 
-    useHistoryPersistence(historyState, isLoaded);
+    useHistoryPersistence(historyState, drawingState, isLoaded);
 
     const value = {
         ...toolState,
