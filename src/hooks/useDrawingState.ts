@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Shape } from "../Types";
+import type { CurrentDraft } from "../Types";
 import {
     DEFAULT_VIEWPORT,
     ZOOM_STEP,
@@ -7,7 +7,7 @@ import {
 } from "../utils/viewport";
 
 export const useDrawingState = () => {
-    const [currentLine, setCurrentLine] = useState<Shape | null>(null);
+    const [currentLine, setCurrentLine] = useState<CurrentDraft | null>(null);
     const [isDrawing, setIsDrawing] = useState<boolean>(false);
     const [zIndex, setZIndex] = useState<number>(0);
     const [viewport, setViewport] = useState(DEFAULT_VIEWPORT);
