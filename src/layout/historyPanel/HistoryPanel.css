@@ -6,6 +6,10 @@
 }
 
 .history_panel_header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   padding: 14px 16px 10px;
   font-size: 10px;
   font-weight: 500;
@@ -14,4 +18,36 @@
   color: var(--text-muted);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
+}
+
+.history_panel_reset {
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 120, 92, 0.28);
+  background: rgba(255, 120, 92, 0.08);
+  color: #ff9a84;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+}
+
+.history_panel_reset:hover {
+  border-color: rgba(255, 120, 92, 0.5);
+  background: rgba(255, 120, 92, 0.14);
+  color: #ffc2b6;
+}
+
+.history_panel_reset:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.history_panel_reset:disabled:hover {
+  border-color: rgba(255, 120, 92, 0.28);
+  background: rgba(255, 120, 92, 0.08);
+  color: #ff9a84;
 }

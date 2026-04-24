@@ -1,9 +1,11 @@
 import type { Shape } from "../Types";
 import { useHistoryState } from "./useHistoryState";
 import { useDrawingState } from "./useDrawingState";
+import { DEFAULT_VIEWPORT } from "../utils/viewport";
 
 export const useHistoryActions = (historyState: ReturnType<typeof useHistoryState>, drawingState: ReturnType<typeof useDrawingState>) => {
     const MAX_HISTORY = 40;
+    const INITIAL_HISTORIES: Shape[][] = [[]];
 
     const addHistory = (newHistory: Shape) => {
         const { histories, setHistories, historyIndex, setHistoryIndex } = historyState;
@@ -21,6 +23,13 @@ export const useHistoryActions = (historyState: ReturnType<typeof useHistoryStat
         setHistories(updatedHistroies);
         setHistoryIndex(updatedHistroies.length - 1);
     };
+
+    const resetHistory = () => {
+        historyState.setHistories(INITIAL_HISTORIES);
+        historyState.setHistoryIndex(0);
+        historyState.setHistoryOffset(0);
+        drawingState.setViewport(DEFAULT_VIEWPORT);
+    };
     
-    return { addHistory };
+    return { addHistory, resetHistory };
 };
