@@ -180,7 +180,7 @@ const createNodeForShape = async (shape: Shape, bounds: Bounds) => {
                 lineJoin: "round",
             });
         case "image": {
-            const image = await loadImageElement(shape.imageSrc);
+            const image = await loadImageElement(shape.maskedImageSrc ?? shape.imageSrc);
             return new Konva.Image({
                 image,
                 x: shape.x - bounds.x,

@@ -21,7 +21,6 @@ export const useMouseEvents = () => {
     } = useDrawing();
 
     const handleMouseDown = (e: KonvaEventObject<MouseEvent>) => {
-        if (selectedTool === "") return;
         setIsDrawing(true);
         const stage = e.target.getStage();
         if (!stage) return;
@@ -161,7 +160,7 @@ export const useMouseEvents = () => {
                 shouldAdd = true;
             }
         }
-        if (shouldAdd) {
+        if (shouldAdd && currentLine.shapeType !== "eraser") {
             addHistory({ ...currentLine, zIndex });
             setZIndex(zIndex + 1);
         }
