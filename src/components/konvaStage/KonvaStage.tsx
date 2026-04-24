@@ -3,7 +3,14 @@ import { Stage, Layer, Line, Rect, Ellipse, Circle, Image as KonvaImage } from "
 import type { Stage as KonvaStageType } from "konva/lib/Stage";
 import type { KonvaEventObject } from "konva/lib/Node";
 import { useDrawing } from "../../hooks/useDrawing";
-import type { ImageShape, Shape, ViewportState } from "../../Types";
+import type { EraserDraft, ImageShape, Shape, ViewportState } from "../../Types";
+import {
+    applyEraserSegmentToSession,
+    createEraserPreviewSession,
+    finalizeEraserPreviewSession,
+    getEraserPreviewImage,
+    warmEraserPreviewSession,
+} from "../../utils/eraser";
 import {
     DEFAULT_VIEWPORT,
     MAX_SCALE,
@@ -36,9 +43,7 @@ const GRID_MAJOR_EVERY = 5;
 const GRID_OVERSCAN = 2;
 const MAX_IMAGE_DROP_SIZE = 12 * 1024 * 1024;
 
-const isSameViewport = (a: ViewportState, b: ViewportState) => {
-    return a.scale === b.scale && a.x === b.x && a.y === b.y;
-};
+const isSameViewport = (a: ViewportState, b: ViewportState) => a.scale === b.scale && a.x === b.x && a.y === b.y;
 
 const isInteractiveTarget = (target: EventTarget | null) => {
     if (!(target instanceof HTMLElement)) {
@@ -99,18 +104,23 @@ const fitDroppedImage = (width: number, height: number, viewport: ViewportState,
     };
 };
 
-const CanvasImageShape = ({ history }: { history: ImageShape }) => {
-    const [image, setImage] = useState<HTMLImageElement | null>(null);
+const CanvasImageShape = ({ history, previewImage }: { history: ImageShape; previewImage?: HTMLCanvasElement | null }) => {
+    const [image, setImage] = useState<HTMLImageElement | HTMLCanvasElement | null>(previewImage ?? null);
 
     useEffect(() => {
+        if (previewImage) {
+            setImage(previewImage);
+            return;
+        }
+
         const nextImage = new window.Image();
         nextImage.onload = () => setImage(nextImage);
-        nextImage.src = history.imageSrc;
+        nextImage.src = history.maskedImageSrc ?? history.imageSrc;
 
         return () => {
             nextImage.onload = null;
         };
-    }, [history.imageSrc]);
+    }, [history.imageSrc, history.maskedImageSrc, previewImage]);
 
     if (!image) {
         return null;
@@ -165,10 +175,95 @@ const buildGridLines = (viewport: ViewportState, size: Size): GridLine[] => {
     return lines;
 };
 
+const normalizeRectangle = (shape: Shape) => {
+    if (shape.shapeType !== "rectangle") {
+        return shape;
+    }
+
+    return {
+        ...shape,
+        x: shape.width < 0 ? shape.x + shape.width : shape.x,
+        y: shape.height < 0 ? shape.y + shape.height : shape.y,
+        width: Math.abs(shape.width),
+        height: Math.abs(shape.height),
+    };
+};
+
+const renderShape = (history: Shape, key: string | number, previewImage?: HTMLCanvasElement | null) => {
+    if (history.shapeType === "image") {
+        return <CanvasImageShape key={key} history={history} previewImage={previewImage} />;
+    }
+
+    if (history.shapeType === "line" || history.shapeType === "freehand") {
+        return (
+            <Line
+                key={key}
+                points={history.points}
+                stroke={history.stroke}
+                strokeWidth={history.strokeWidth}
+                zIndex={history.zIndex}
+                lineCap="round"
+                lineJoin="round"
+            />
+        );
+    }
+
+    if (history.shapeType === "rectangle") {
+        return (
+            <Rect
+                key={key}
+                x={history.x}
+                y={history.y}
+                width={history.width}
+                height={history.height}
+                stroke={history.stroke}
+                strokeWidth={history.strokeWidth}
+                zIndex={history.zIndex}
+            />
+        );
+    }
+
+    if (history.shapeType === "ellipse") {
+        return (
+            <Ellipse
+                key={key}
+                x={history.x}
+                y={history.y}
+                radiusX={history.radiusX}
+                radiusY={history.radiusY}
+                stroke={history.stroke}
+                strokeWidth={history.strokeWidth}
+                zIndex={history.zIndex}
+            />
+        );
+    }
+
+    if (history.shapeType === "polygon") {
+        return (
+            <Line
+                key={key}
+                points={history.points}
+                stroke={history.stroke}
+                strokeWidth={history.strokeWidth}
+                zIndex={history.zIndex}
+                closed
+                lineCap="round"
+                lineJoin="round"
+            />
+        );
+    }
+
+    return null;
+};
+
 const KonvaStage = () => {
     const containerRef = useRef<HTMLDivElement>(null);
     const prevViewportRef = useRef<ViewportState>(DEFAULT_VIEWPORT);
     const didPanRef = useRef(false);
+    const eraserSessionRef = useRef<ReturnType<typeof createEraserPreviewSession> | null>(null);
+    const eraserFrameRef = useRef<number | null>(null);
+    const eraserProcessingRef = useRef(false);
+    const pendingEraserDraftRef = useRef<EraserDraft | null>(null);
     const [dimensions, setDimensions] = useState<Size>({
         width: 0,
         height: 0,
@@ -181,6 +276,7 @@ const KonvaStage = () => {
     const [panStart, setPanStart] = useState<{ pointer: Point; viewport: ViewportState } | null>(null);
     const [isDragActive, setIsDragActive] = useState(false);
     const [dropError, setDropError] = useState<string | null>(null);
+    const [previewLayers, setPreviewLayers] = useState<Shape[] | null>(null);
     const dragDepthRef = useRef(0);
 
     const {
@@ -194,6 +290,7 @@ const KonvaStage = () => {
         zIndex,
         setZIndex,
         addHistory,
+        replaceLayers,
         layers,
         viewport,
         setViewport,
@@ -302,6 +399,71 @@ const KonvaStage = () => {
         }
     };
 
+    const flushEraserPreview = async () => {
+        const session = eraserSessionRef.current;
+        const draft = pendingEraserDraftRef.current;
+
+        if (!session || !draft || eraserProcessingRef.current) {
+            return;
+        }
+
+        pendingEraserDraftRef.current = null;
+        eraserProcessingRef.current = true;
+
+        try {
+            const result = await applyEraserSegmentToSession(session, draft);
+            if (session === eraserSessionRef.current && result.changed) {
+                setPreviewLayers([...result.layers]);
+            }
+        } finally {
+            eraserProcessingRef.current = false;
+        }
+
+        if (pendingEraserDraftRef.current) {
+            if (eraserFrameRef.current === null) {
+                eraserFrameRef.current = window.requestAnimationFrame(() => {
+                    eraserFrameRef.current = null;
+                    void flushEraserPreview();
+                });
+            }
+        }
+    };
+
+    const scheduleEraserPreview = () => {
+        if (eraserFrameRef.current !== null) {
+            return;
+        }
+
+        eraserFrameRef.current = window.requestAnimationFrame(() => {
+            eraserFrameRef.current = null;
+            void flushEraserPreview();
+        });
+    };
+
+    const enqueueEraserPreview = (draft: EraserDraft) => {
+        const currentDraft = pendingEraserDraftRef.current;
+        pendingEraserDraftRef.current = currentDraft
+            ? {
+                ...currentDraft,
+                points: [...currentDraft.points, ...draft.points.slice(2)],
+            }
+            : draft;
+        scheduleEraserPreview();
+    };
+
+    const settleEraserPreview = async () => {
+        while (pendingEraserDraftRef.current || eraserProcessingRef.current) {
+            if (!eraserProcessingRef.current && pendingEraserDraftRef.current) {
+                await flushEraserPreview();
+                continue;
+            }
+
+            await new Promise<void>((resolve) => {
+                window.requestAnimationFrame(() => resolve());
+            });
+        }
+    };
+
     const handleMouseDown = (evt: KonvaEventObject<NativeMouseEvent>) => {
         const stage = evt.target.getStage();
         if (!stage) {
@@ -322,10 +484,6 @@ const KonvaStage = () => {
                 setIsSnaping(false);
             }
             startPan(stage, pointer);
-            return;
-        }
-
-        if (selectedTool === "") {
             return;
         }
 
@@ -372,6 +530,24 @@ const KonvaStage = () => {
                 zIndex,
                 shapeType: "ellipse",
             });
+        } else if (selectedTool === "eraser") {
+            const eraserSession = createEraserPreviewSession(layers);
+            eraserSessionRef.current = eraserSession;
+            pendingEraserDraftRef.current = null;
+            setPreviewLayers(layers);
+            void warmEraserPreviewSession(eraserSession);
+            setCurrentLine({
+                shapeType: "eraser",
+                points: [pos.x, pos.y],
+                size: strokeWidth,
+            });
+            enqueueEraserPreview({
+                shapeType: "eraser",
+                points: [pos.x, pos.y],
+                size: strokeWidth,
+            });
+        } else {
+            setIsDrawing(false);
         }
     };
 
@@ -434,10 +610,26 @@ const KonvaStage = () => {
                 radiusX: Math.abs(pos.x - currentLine.x),
                 radiusY: Math.abs(pos.y - currentLine.y),
             });
+        } else if (currentLine.shapeType === "eraser") {
+            const lastPointIndex = currentLine.points.length - 2;
+            const lastPoint = {
+                x: currentLine.points[lastPointIndex],
+                y: currentLine.points[lastPointIndex + 1],
+            };
+
+            setCurrentLine({
+                ...currentLine,
+                points: [...currentLine.points, pos.x, pos.y],
+            });
+            enqueueEraserPreview({
+                shapeType: "eraser",
+                points: [lastPoint.x, lastPoint.y, pos.x, pos.y],
+                size: currentLine.size,
+            });
         }
     };
 
-    const handleMouseUp = () => {
+    const handleMouseUp = async () => {
         if (isPanning) {
             stopPan();
             return;
@@ -448,52 +640,61 @@ const KonvaStage = () => {
         }
 
         setIsDrawing(false);
+        const draft = currentLine;
+        setCurrentLine(null);
 
-        if (currentLine.shapeType === "line") {
-            const dx = currentLine.end.x - currentLine.start.x;
-            const dy = currentLine.end.y - currentLine.start.y;
+        if (draft.shapeType === "eraser") {
+            await settleEraserPreview();
+            const eraserSession = eraserSessionRef.current;
+            if (eraserSession?.hasChanges) {
+                const nextLayers = await finalizeEraserPreviewSession(eraserSession);
+                replaceLayers(nextLayers);
+            }
+            eraserSessionRef.current = null;
+            pendingEraserDraftRef.current = null;
+            setPreviewLayers(null);
+            return;
+        }
+
+        if (draft.shapeType === "line") {
+            const dx = draft.end.x - draft.start.x;
+            const dy = draft.end.y - draft.start.y;
             const dist = Math.sqrt(dx * dx + dy * dy);
 
             if (dist >= 5) {
                 addHistory({
-                    ...currentLine,
-                    points: [currentLine.start.x, currentLine.start.y, currentLine.end.x, currentLine.end.y],
+                    ...draft,
+                    points: [draft.start.x, draft.start.y, draft.end.x, draft.end.y],
                 });
                 setZIndex(zIndex + 1);
             }
-        } else if (currentLine.shapeType === "freehand") {
-            const pts = currentLine.points;
+        } else if (draft.shapeType === "freehand") {
+            const pts = draft.points;
             if (pts.length >= 4) {
                 const dx = pts[pts.length - 2] - pts[0];
                 const dy = pts[pts.length - 1] - pts[1];
                 const dist = Math.sqrt(dx * dx + dy * dy);
                 if (dist >= 5) {
-                    addHistory({ ...currentLine, zIndex });
+                    addHistory({ ...draft, zIndex });
                     setZIndex(zIndex + 1);
                 }
             }
-        } else if (currentLine.shapeType === "rectangle") {
-            const width = currentLine.width;
-            const height = currentLine.height;
+        } else if (draft.shapeType === "rectangle") {
+            const width = draft.width;
+            const height = draft.height;
             if (Math.abs(width) >= 5 && Math.abs(height) >= 5) {
-                addHistory({
-                    ...currentLine,
-                    x: width < 0 ? currentLine.x + width : currentLine.x,
-                    y: height < 0 ? currentLine.y + height : currentLine.y,
-                    width: Math.abs(width),
-                    height: Math.abs(height),
+                addHistory(normalizeRectangle({
+                    ...draft,
                     zIndex,
-                });
+                }));
                 setZIndex(zIndex + 1);
             }
-        } else if (currentLine.shapeType === "ellipse") {
-            if (currentLine.radiusX >= 5 && currentLine.radiusY >= 5) {
-                addHistory({ ...currentLine, zIndex });
+        } else if (draft.shapeType === "ellipse") {
+            if (draft.radiusX >= 5 && draft.radiusY >= 5) {
+                addHistory({ ...draft, zIndex });
                 setZIndex(zIndex + 1);
             }
         }
-
-        setCurrentLine(null);
     };
 
     const handleStageClick = (evt: KonvaEventObject<MouseEvent>) => {
@@ -614,15 +815,6 @@ const KonvaStage = () => {
         }
     };
 
-    const cursorClassName = isPanning
-        ? "is-panning"
-        : isSpacePressed
-            ? "is-pan-ready"
-            : "is-drawing";
-    const gridLines = buildGridLines(viewport, dimensions);
-    const gridStrokeWidth = Math.max(0.6, 1 / viewport.scale);
-    const sortedLayers = [...layers].sort((left, right) => left.zIndex - right.zIndex);
-
     const handleDragEnter = (event: DragEvent<HTMLDivElement>) => {
         if (!event.dataTransfer.types.includes("Files")) {
             return;
@@ -685,7 +877,6 @@ const KonvaStage = () => {
             addHistory({
                 shapeType: "image",
                 imageSrc: imageData.src,
-                imageName: imageFile.name,
                 x: worldPoint.x - fittedImage.width / 2,
                 y: worldPoint.y - fittedImage.height / 2,
                 width: fittedImage.width,
@@ -693,11 +884,30 @@ const KonvaStage = () => {
                 stroke: "transparent",
                 strokeWidth: 0,
                 zIndex: minZIndex - 1,
+                imageName: imageFile.name,
             });
         } catch {
             setDropError("이미지를 불러오지 못했어요. 다른 파일로 다시 시도해 주세요.");
         }
     };
+
+    const cursorClassName = isPanning
+        ? "is-panning"
+        : isSpacePressed
+            ? "is-pan-ready"
+            : "is-drawing";
+    const gridLines = buildGridLines(viewport, dimensions);
+    const gridStrokeWidth = Math.max(0.6, 1 / viewport.scale);
+    const displayedLayers = previewLayers ?? layers;
+    const sortedLayers = [...displayedLayers].sort((left, right) => left.zIndex - right.zIndex);
+
+    useEffect(() => {
+        return () => {
+            if (eraserFrameRef.current !== null) {
+                window.cancelAnimationFrame(eraserFrameRef.current);
+            }
+        };
+    }, []);
 
     return (
         <div
@@ -720,7 +930,9 @@ const KonvaStage = () => {
                     handleMouseMove(evt);
                     handleStageMouseMove(evt);
                 }}
-                onMouseUp={handleMouseUp}
+                onMouseUp={() => {
+                    void handleMouseUp();
+                }}
                 onMouseLeave={handleMouseLeave}
                 onClick={handleStageClick}
                 onWheel={handleWheel}
@@ -736,107 +948,25 @@ const KonvaStage = () => {
                     ))}
                 </Layer>
                 <Layer>
-                    {sortedLayers.map((history: Shape, index) => {
-                        if (history.shapeType === "image") {
-                            return <CanvasImageShape key={`image-${index}-${history.zIndex}`} history={history} />;
-                        }
-
-                        if (history.shapeType === "line" || history.shapeType === "freehand") {
-                            return (
-                                <Line
-                                    key={index}
-                                    points={history.points}
-                                    stroke={history.stroke}
-                                    strokeWidth={history.strokeWidth}
-                                    zIndex={history.zIndex}
-                                    lineCap="round"
-                                    lineJoin="round"
-                                />
-                            );
-                        }
-
-                        if (history.shapeType === "rectangle") {
-                            return (
-                                <Rect
-                                    key={index}
-                                    x={history.x}
-                                    y={history.y}
-                                    width={history.width}
-                                    height={history.height}
-                                    stroke={history.stroke}
-                                    strokeWidth={history.strokeWidth}
-                                    zIndex={history.zIndex}
-                                />
-                            );
-                        }
-
-                        if (history.shapeType === "ellipse") {
-                            return (
-                                <Ellipse
-                                    key={index}
-                                    x={history.x}
-                                    y={history.y}
-                                    radiusX={history.radiusX}
-                                    radiusY={history.radiusY}
-                                    stroke={history.stroke}
-                                    strokeWidth={history.strokeWidth}
-                                    zIndex={history.zIndex}
-                                />
-                            );
-                        }
-
-                        if (history.shapeType === "polygon") {
-                            return (
-                                <Line
-                                    key={index}
-                                    points={history.points}
-                                    stroke={history.stroke}
-                                    strokeWidth={history.strokeWidth}
-                                    zIndex={history.zIndex}
-                                    closed
-                                    lineCap="round"
-                                    lineJoin="round"
-                                />
-                            );
-                        }
-
-                        return null;
-                    })}
-                    {currentLine && (currentLine.shapeType === "line" || currentLine.shapeType === "freehand") && (
+                    {sortedLayers.map((history, index) => renderShape(
+                        history,
+                        `${history.shapeType}-${index}-${history.zIndex}`,
+                        history.shapeType === "image" && eraserSessionRef.current ? getEraserPreviewImage(eraserSessionRef.current, history) : null,
+                    ))}
+                    {currentLine && currentLine.shapeType === "line" && renderShape({
+                        ...currentLine,
+                        points: [currentLine.start.x, currentLine.start.y, currentLine.end.x, currentLine.end.y],
+                    }, "draft-line")}
+                    {currentLine && currentLine.shapeType === "freehand" && renderShape(currentLine, "draft-freehand")}
+                    {currentLine && currentLine.shapeType === "rectangle" && renderShape(normalizeRectangle(currentLine), "draft-rectangle")}
+                    {currentLine && currentLine.shapeType === "ellipse" && renderShape(currentLine, "draft-ellipse")}
+                    {currentLine && currentLine.shapeType === "eraser" && (
                         <Line
-                            points={
-                                currentLine.shapeType === "line"
-                                    ? [currentLine.start.x, currentLine.start.y, currentLine.end.x, currentLine.end.y]
-                                    : currentLine.points
-                            }
-                            stroke={currentLine.stroke}
-                            strokeWidth={currentLine.strokeWidth}
-                            tension={0.5}
+                            points={currentLine.points}
+                            stroke="rgba(22, 163, 74, 0.55)"
+                            strokeWidth={currentLine.size}
                             lineCap="round"
                             lineJoin="round"
-                            zIndex={zIndex}
-                        />
-                    )}
-                    {currentLine && currentLine.shapeType === "rectangle" && (
-                        <Rect
-                            x={currentLine.width < 0 ? currentLine.x + currentLine.width : currentLine.x}
-                            y={currentLine.height < 0 ? currentLine.y + currentLine.height : currentLine.y}
-                            width={Math.abs(currentLine.width)}
-                            height={Math.abs(currentLine.height)}
-                            stroke={currentLine.stroke}
-                            strokeWidth={currentLine.strokeWidth}
-                            zIndex={zIndex}
-                        />
-                    )}
-                    {currentLine && currentLine.shapeType === "ellipse" && (
-                        <Ellipse
-                            x={currentLine.x}
-                            y={currentLine.y}
-                            radiusX={currentLine.radiusX}
-                            radiusY={currentLine.radiusY}
-                            stroke={currentLine.stroke}
-                            strokeWidth={currentLine.strokeWidth}
-                            zIndex={zIndex}
                         />
                     )}
                     {selectedTool === "polygon" && currentPolygon && (

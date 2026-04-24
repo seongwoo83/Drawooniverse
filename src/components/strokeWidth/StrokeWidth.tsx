@@ -1,15 +1,17 @@
 import { useDrawing } from "../../hooks/useDrawing";
 import './StrokeWidth.css'
 const StrokeWidth = ()=>{
-    const {strokeWidth, setStrokeWidth} = useDrawing();
+    const { selectedTool, strokeWidth, setStrokeWidth } = useDrawing();
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>)=>{
         setStrokeWidth(Number(e.target.value));
     }
 
+    const isEraser = selectedTool === "eraser";
+
     return (
         <div className="stroke_width_wrapper">
-            <span className="stroke_width_label">Stroke Width:</span>
+            <span className="stroke_width_label">{isEraser ? "Eraser Size:" : "Stroke Width:"}</span>
             <input type="range" min={5} max={50} value={strokeWidth} onChange={handleChange} />
             <span className="stroke_width_value">{strokeWidth}px</span>
         </div>

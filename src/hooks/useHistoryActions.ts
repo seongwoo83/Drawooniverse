@@ -7,12 +7,11 @@ export const useHistoryActions = (historyState: ReturnType<typeof useHistoryStat
     const MAX_HISTORY = 40;
     const INITIAL_HISTORIES: Shape[][] = [[]];
 
-    const addHistory = (newHistory: Shape) => {
+    const pushLayers = (nextLayers: Shape[]) => {
         const { histories, setHistories, historyIndex, setHistoryIndex } = historyState;
         void drawingState;
 
         const newHistories = histories.slice(0, historyIndex + 1);
-        const nextLayers = [...histories[historyIndex], newHistory];
         let updatedHistroies = [...newHistories, nextLayers];
 
         if (updatedHistroies.length > MAX_HISTORY) {
@@ -24,6 +23,15 @@ export const useHistoryActions = (historyState: ReturnType<typeof useHistoryStat
         setHistoryIndex(updatedHistroies.length - 1);
     };
 
+    const addHistory = (newHistory: Shape) => {
+        const currentLayers = historyState.histories[historyState.historyIndex] ?? [];
+        pushLayers([...currentLayers, newHistory]);
+    };
+
+    const replaceLayers = (layers: Shape[]) => {
+        pushLayers(layers);
+    };
+
     const resetHistory = () => {
         historyState.setHistories(INITIAL_HISTORIES);
         historyState.setHistoryIndex(0);
@@ -31,5 +39,5 @@ export const useHistoryActions = (historyState: ReturnType<typeof useHistoryStat
         drawingState.setViewport(DEFAULT_VIEWPORT);
     };
     
-    return { addHistory, resetHistory };
+    return { addHistory, replaceLayers, resetHistory };
 };
