@@ -79,6 +79,7 @@ interface DrawingContextType {
     isDrawing: boolean;
     setIsDrawing: (isDrawing: boolean) => void;
     addHistory: (history: Shape) => void;
+    resetHistory: () => void;
     undo: () => void;
     redo: () => void;
     viewport: ViewportState;
