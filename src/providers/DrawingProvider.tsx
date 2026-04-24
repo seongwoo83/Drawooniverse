@@ -21,6 +21,10 @@ export const DrawingProvider = ({ children }: { children: ReactNode }) => {
         historyActions.addHistory(newHistory);
     };
 
+    const replaceLayers = (nextLayers: Shape[]) => {
+        historyActions.replaceLayers(nextLayers);
+    };
+
     const setCurrentHistory = (index: number) => {
         historyState.setHistoryIndex(index);
     };
@@ -45,6 +49,7 @@ export const DrawingProvider = ({ children }: { children: ReactNode }) => {
         layers,
         setCurrentHistory,
         addHistory,
+        replaceLayers,
         canExport,
         exportToPng,
     };
