@@ -1,5 +1,13 @@
 import type { Dispatch, SetStateAction } from "react";
 
+type Tool =
+    | "line"
+    | "rectangle"
+    | "ellipse"
+    | "polygon"
+    | "freehand"
+    | "eraser";
+
 type ButtonProps = {
     title: string;
     onClick: () => void;
@@ -53,20 +61,30 @@ interface ImageShape extends BaseShape {
     width: number;
     height: number;
     imageSrc: string;
+    maskedImageSrc?: string;
+    imageMaskSrc?: string;
     imageName?: string;
 }
 
 type Shape = LineShape | FreehandShape | RectangleShape | EllipseShape | PolygonShape | ImageShape;
 
+interface EraserDraft {
+    shapeType: "eraser";
+    points: number[];
+    size: number;
+}
+
+type CurrentDraft = Shape | EraserDraft;
+
 interface DrawingContextType {
-    selectedTool: string;
-    setSelectedTool: (tool: string) => void;
+    selectedTool: Tool;
+    setSelectedTool: (tool: Tool) => void;
     strokeWidth: number;
     setStrokeWidth: (width: number) => void;
     strokeColor: string;
     setStrokeColor: (color: string) => void;
-    currentLine: Shape | null;
-    setCurrentLine: (line: Shape | null) => void;
+    currentLine: CurrentDraft | null;
+    setCurrentLine: (line: CurrentDraft | null) => void;
     layers: Shape[];
     histories: Shape[][];
     historyIndex: number;
@@ -79,6 +97,7 @@ interface DrawingContextType {
     isDrawing: boolean;
     setIsDrawing: (isDrawing: boolean) => void;
     addHistory: (history: Shape) => void;
+    replaceLayers: (layers: Shape[]) => void;
     undo: () => void;
     redo: () => void;
     viewport: ViewportState;
@@ -100,7 +119,10 @@ export type {
     ButtonProps,
     DrawingContextType,
     ViewportState,
+    Tool,
     Shape,
+    CurrentDraft,
+    EraserDraft,
     LineShape,
     FreehandShape,
     RectangleShape,

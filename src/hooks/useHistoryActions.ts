@@ -5,12 +5,11 @@ import { useDrawingState } from "./useDrawingState";
 export const useHistoryActions = (historyState: ReturnType<typeof useHistoryState>, drawingState: ReturnType<typeof useDrawingState>) => {
     const MAX_HISTORY = 40;
 
-    const addHistory = (newHistory: Shape) => {
+    const pushLayers = (nextLayers: Shape[]) => {
         const { histories, setHistories, historyIndex, setHistoryIndex } = historyState;
         void drawingState;
 
         const newHistories = histories.slice(0, historyIndex + 1);
-        const nextLayers = [...histories[historyIndex], newHistory];
         let updatedHistroies = [...newHistories, nextLayers];
 
         if (updatedHistroies.length > MAX_HISTORY) {
@@ -21,6 +20,15 @@ export const useHistoryActions = (historyState: ReturnType<typeof useHistoryStat
         setHistories(updatedHistroies);
         setHistoryIndex(updatedHistroies.length - 1);
     };
+
+    const addHistory = (newHistory: Shape) => {
+        const currentLayers = historyState.histories[historyState.historyIndex] ?? [];
+        pushLayers([...currentLayers, newHistory]);
+    };
+
+    const replaceLayers = (layers: Shape[]) => {
+        pushLayers(layers);
+    };
     
-    return { addHistory };
+    return { addHistory, replaceLayers };
 };

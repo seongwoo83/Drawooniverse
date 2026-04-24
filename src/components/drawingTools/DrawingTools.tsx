@@ -1,7 +1,9 @@
+import type { JSX } from "react";
 import { useDrawing } from "../../hooks/useDrawing";
+import type { Tool } from "../../Types";
 import './DrawingTools.css'
 
-const tools = [
+const tools: Array<{ id: Tool; label: string; icon: JSX.Element }> = [
   {
     id: 'line',
     label: 'Line',
@@ -44,6 +46,16 @@ const tools = [
     icon: (
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
         <path d="M3 15 C5 11, 8 7, 10 9 C12 11, 14 6, 17 5" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" fill="none"/>
+      </svg>
+    )
+  },
+  {
+    id: 'eraser',
+    label: 'Erase',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <path d="M6.4 13.7L11.8 8.3L15.5 12C16.3 12.8 16.3 14.1 15.5 14.9L14.9 15.5C14.1 16.3 12.8 16.3 12 15.5L8.3 11.8L4.9 15.2C4.5 15.6 4 15.8 3.4 15.8H2.5" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M8.1 5.3C8.9 4.5 10.2 4.5 11 5.3L12.9 7.2L7.5 12.6L5.6 10.7C4.8 9.9 4.8 8.6 5.6 7.8L8.1 5.3Z" stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round"/>
       </svg>
     )
   },
