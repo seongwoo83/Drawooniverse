@@ -45,10 +45,12 @@ const clampViewportPosition = (viewport: ViewportState, size: Size): ViewportSta
         };
     }
 
-    const minX = size.width - scaledWidth - PAN_MARGIN;
-    const maxX = PAN_MARGIN;
-    const minY = size.height - scaledHeight - PAN_MARGIN;
-    const maxY = PAN_MARGIN;
+    const panPaddingX = Math.max(PAN_MARGIN, size.width);
+    const panPaddingY = Math.max(PAN_MARGIN, size.height);
+    const minX = size.width - scaledWidth - panPaddingX;
+    const maxX = panPaddingX;
+    const minY = size.height - scaledHeight - panPaddingY;
+    const maxY = panPaddingY;
 
     return {
         ...viewport,
